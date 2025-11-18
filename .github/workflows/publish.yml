@@ -1,5 +1,8 @@
 name: Publish Python Package
 
+permissions:
+  id-token: write
+
 on:
   push:
     tags:
@@ -26,6 +29,3 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.13.0
-        with:
-          user: ${{ secrets.PYPI_USERNAME }}
-          password: ${{ secrets.PYPI_PASSWORD }}
