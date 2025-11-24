@@ -59,42 +59,81 @@ class ConfigParser:
             msg = f"Could not import module '{module_path}': {e}"
             raise ImportError(msg) from e
 
-    def _resolve_entry(self, entry: Any) -> Any:  # noqa: C901, PLR0911, PLR0912
-        if isinstance(entry, str) and entry.startswith("args."):
+    def _load_symbol_from_module(self, module_path: str, symbol_name: str) -> Any:
+        if module_path == "local":
+            if self.local is None:
+                msg = "local module is not given"
+                raise ValueError(msg)
+
+            return getattr(self.local, symbol_name)
+
+        return self._load_object(module_path, symbol_name)
+
+    def _resolve_string(self, entry: str) -> Any:
+        if entry.startswith("args."):
             key = entry.split(".")[1]
             return self.variables.get(key)
 
-        if not isinstance(entry, dict):
-            return entry
+        return entry
 
-        module_path = entry["module"]
-        symbol_name = entry["source"]
+    def _resolve_list(self, entry: list) -> list:
+        return [self._resolve_entry(e) for e in entry]
+
+    def _resolve_args(self, args: Any) -> dict[str]:
+        resolved = {}
+        if isinstance(args, dict):
+            for k, v in args.items():
+                if k in self.kwargs:
+                    resolved[k] = self.kwargs[k]
+                else:
+                    resolved[k] = self._resolve_entry(v)
+
+                self.variables[k] = resolved[k]
+
+        return resolved
+
+    def _resolve_dict(self, entry: dict[str]) -> Any:
+        module_path = entry.get("module")
+        symbol_name = entry.get("source")
+
+        if module_path is None or symbol_name is None:
+            return {k: self._resolve_entry(v) for k, v in entry.items()}
+
         call = entry.get("call", True)
         lazy = entry.get("lazy", False)
         args = entry.get("args", {})
 
-        obj = None
+        obj = self._load_symbol_from_module(module_path, symbol_name)
 
-        if module_path == "local":
-            obj = getattr(self.local, symbol_name)
-        else:
-            obj = self._load_object(module_path, symbol_name)
+        resolved_args = self._resolve_args(args)
 
-        if not call:
+        return self._call_or_return(obj, call, lazy, resolved_args)
+
+    def _resolve_entry(self, entry: Any) -> Any:
+        if isinstance(entry, str):
+            return self._resolve_string(entry)
+
+        if isinstance(entry, list):
+            return self._resolve_list(entry)
+
+        if isinstance(entry, dict):
+            return self._resolve_dict(entry)
+
+        return entry
+
+    def _call_or_return(
+        self,
+        obj: Any,
+        call: Any,
+        lazy: bool,
+        args: dict[str],
+    ) -> Any:
+        if call is False:
             return obj
 
-        if isinstance(args, dict):
-            for k in args:
-                if k in self.kwargs:
-                    args[k] = self.kwargs[k]
-                else:
-                    args[k] = self._resolve_entry(args[k])
-
-                self.variables[k] = args[k]
-
-        if isinstance(call, bool):
+        if call is True:
             if not callable(obj):
-                msg = f"{obj} is not callable"
+                msg = f"'{obj}' is not callable"
                 raise TypeError(msg)
 
             if lazy:
@@ -103,7 +142,7 @@ class ConfigParser:
             return obj(**args)
 
         if not hasattr(obj, call):
-            msg = f"Module '{symbol_name}' has no attribute '{call}'"
+            msg = f"'{obj}' has no attribute '{call}'"
             raise AttributeError(msg)
 
         fn = getattr(obj, call)
