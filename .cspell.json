@@ -11,7 +11,8 @@
         "pyproject",
         "pytest",
         "pyyaml",
-        "setuptools"
+        "setuptools",
+        "venv"
     ],
     "ignorePaths": [
         ".cspell.json",
