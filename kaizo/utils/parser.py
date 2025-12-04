@@ -7,13 +7,13 @@ from typing import Any
 
 import yaml
 
-from .fn import FnWithKwargs
+from .entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
 
 
 class ConfigParser:
     config: dict[str]
     local: ModuleType | None
-    variables: dict[str]
+    variables: DictEntry[str]
     kwargs: dict[str]
 
     def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
@@ -30,7 +30,7 @@ class ConfigParser:
         else:
             self.local = None
 
-        self.variables = {}
+        self.variables = DictEntry(resolve=False)
         self.kwargs = kwargs or {}
 
     def _load_python_module(self, path: Path) -> ModuleType:
@@ -69,35 +69,53 @@ class ConfigParser:
 
         return self._load_object(module_path, symbol_name)
 
-    def _resolve_string(self, entry: str) -> Any:
+    def _resolve_string(self, key: str, entry: str) -> Entry:
         if entry.startswith("args."):
             key = entry.split(".")[1]
-            return self.variables.get(key)
 
-        return entry
+            return (
+                FieldEntry(key=key, value=self.kwargs[key])
+                if key in self.kwargs
+                else self.variables.get(key)
+            )
 
-    def _resolve_list(self, entry: list) -> list:
-        return [self._resolve_entry(e) for e in entry]
+        return FieldEntry(key=key, value=entry)
 
-    def _resolve_args(self, args: Any) -> dict[str]:
-        resolved = {}
+    def _resolve_list(self, key: str, entry: list) -> FieldEntry[list]:
+        return FieldEntry(
+            key=key,
+            value=ListEntry([self._resolve_entry(key, e) for e in entry]),
+        )
+
+    def _resolve_args(self, key: str, args: Any) -> DictEntry[str] | ListEntry:
         if isinstance(args, dict):
+            resolved = DictEntry()
             for k, v in args.items():
-                if k in self.kwargs:
-                    resolved[k] = self.kwargs[k]
-                else:
-                    resolved[k] = self._resolve_entry(v)
+                value = (
+                    FieldEntry(key=key, value=self.kwargs[k])
+                    if k in self.kwargs
+                    else self._resolve_entry(key, v)
+                )
 
-                self.variables[k] = resolved[k]
+                resolved[k] = value
+                self.variables[k] = value
+
+        if isinstance(args, list):
+            resolved = ListEntry()
+            for v in args:
+                resolved.append(self._resolve_entry(key, v))
 
         return resolved
 
-    def _resolve_dict(self, entry: dict[str]) -> Any:
+    def _resolve_dict(self, key: str, entry: dict[str]) -> Entry:
         module_path = entry.get("module")
         symbol_name = entry.get("source")
 
         if module_path is None or symbol_name is None:
-            return {k: self._resolve_entry(v) for k, v in entry.items()}
+            return FieldEntry(
+                key=key,
+                value=DictEntry({k: self._resolve_entry(key, v) for k, v in entry.items()}),
+            )
 
         call = entry.get("call", True)
         lazy = entry.get("lazy", False)
@@ -105,61 +123,29 @@ class ConfigParser:
 
         obj = self._load_symbol_from_module(module_path, symbol_name)
 
-        resolved_args = self._resolve_args(args)
+        resolved_args = self._resolve_args(key, args)
 
-        return self._call_or_return(obj, call, lazy, resolved_args)
+        return ModuleEntry(key=key, obj=obj, call=call, lazy=lazy, args=resolved_args)
 
-    def _resolve_entry(self, entry: Any) -> Any:
+    def _resolve_entry(self, key: str, entry: Any) -> Entry:
         if isinstance(entry, str):
-            return self._resolve_string(entry)
+            return self._resolve_string(key, entry)
 
         if isinstance(entry, list):
-            return self._resolve_list(entry)
+            return self._resolve_list(key, entry)
 
         if isinstance(entry, dict):
-            return self._resolve_dict(entry)
+            return self._resolve_dict(key, entry)
 
-        return entry
+        return FieldEntry(key=key, value=entry)
 
-    def _call_or_return(
-        self,
-        obj: Any,
-        call: Any,
-        lazy: bool,
-        args: dict[str],
-    ) -> Any:
-        if call is False:
-            return obj
-
-        if call is True:
-            if not callable(obj):
-                msg = f"'{obj}' is not callable"
-                raise TypeError(msg)
-
-            if lazy:
-                return FnWithKwargs(fn=obj, kwargs=args)
-
-            return obj(**args)
-
-        if not hasattr(obj, call):
-            msg = f"'{obj}' has no attribute '{call}'"
-            raise AttributeError(msg)
-
-        fn = getattr(obj, call)
-
-        if not callable(fn):
-            msg = f"{fn} is not callable"
-            raise TypeError(msg)
-
-        if lazy:
-            return FnWithKwargs(fn=fn, kwargs=args)
-
-        return fn(**args)
-
-    def parse(self) -> dict[str]:
-        res = {}
+    def parse(self) -> DictEntry[str]:
+        res = DictEntry()
 
         for k in self.config:
-            res[k] = self._resolve_entry(self.config[k])
+            value = self._resolve_entry(k, self.config[k])
+
+            res[k] = value
+            self.variables[k] = value
 
         return res
