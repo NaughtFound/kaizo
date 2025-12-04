@@ -1,7 +1,7 @@
 # Kaizo
 
-YML file config reader and runner
----
+## YML file config reader and runner
+
 The parser in `utils/parser.py` makes experiments highly flexible. Each YAML file may contain:
 
 - **Direct values**: simple scalars (e.g., `epochs: 10`)
@@ -16,9 +16,9 @@ This design lets you declaratively define entire experiments.
 Below is the example config file:
 
 ```yaml
-ddpm:
-  module: trainer.models.ddpm
-  source: DDPMTrainer
+node01:
+  module: trainer.models
+  source: Trainer
   args:
     prefix: notebooks
     model_type: sde
@@ -34,13 +34,6 @@ ddpm:
     download: True
     loader:
       module: loaders
-      source: MNISTLoader
+      source: DatasetLoader
       call: False
 ```
-
-This config demonstrates:
-
-- Loading **MNIST** with `MNISTLoader`
-- Using an **SDE-based diffusion trainer**
-- Training with `batch_size=64` and saving checkpoints every 50 steps
-- Building a UNet-like model with `in_channels=1` and `img_size=32`

@@ -6,12 +6,15 @@
     "language": "en",
     // words - list of words to be always considered correct
     "words": [
+        "Ghazanfari",
         "kaizo",
         "pyproject",
+        "pyyaml",
         "setuptools"
     ],
     "ignorePaths": [
-        ".cspell.json"
+        ".cspell.json",
+        "ruff.toml"
     ],
     "flagWords": [
         "formate"
