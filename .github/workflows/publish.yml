@@ -28,17 +28,14 @@ jobs:
         run: python -m pip install --upgrade pip uv toml
 
       - name: Read version from pyproject.toml
-        id: get_version
-        run: |
-          import toml
-          pyproject = toml.load("pyproject.toml")
-          version = pyproject["project"]["version"]
-          print(f"VERSION={version}" >> $GITHUB_OUTPUT)
-        shell: python
+        uses: maybe-hello-world/pyproject-check-version@v4
+        id: versioncheck
+        with:
+          pyproject-path: "./pyproject.toml"
 
       - name: Create tag if it doesn't exist
         run: |
-          VERSION=${{ steps.get_version.outputs.VERSION }}
+          VERSION=${{ steps.versioncheck.outputs.local_version }}
           if git rev-parse "v$VERSION" >/dev/null 2>&1; then
             echo "Tag v$VERSION already exists. Skipping."
           else
