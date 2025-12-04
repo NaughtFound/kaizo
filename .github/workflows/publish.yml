@@ -2,29 +2,49 @@ name: Publish Python Package
 
 permissions:
   id-token: write
+  contents: write
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
-    tags:
-      - "v*"
-
 jobs:
   build-and-publish:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
-      - name: Install uv
-        run: python -m pip install --upgrade pip uv
+      - name: Install packages
+        run: python -m pip install --upgrade pip uv toml
+
+      - name: Read version from pyproject.toml
+        id: get_version
+        run: |
+          import toml
+          pyproject = toml.load("pyproject.toml")
+          version = pyproject["project"]["version"]
+          print(f"::set-output name=version::{version}")
+
+      - name: Create tag if it doesn't exist
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists. Skipping."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "v$VERSION" -m "Release v$VERSION"
+            git push origin "v$VERSION"
+          fi
 
       - name: Build package
         run: uv build
