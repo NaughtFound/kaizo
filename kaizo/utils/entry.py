@@ -133,11 +133,16 @@ class ModuleEntry(Entry):
     obj: Any
     call: Any
     lazy: bool
-    args: DictEntry[str] | None = None
+    args: DictEntry[str] | ListEntry | None = None
 
     def __call__(self) -> Any | FnWithKwargs:
-        if self.args is None:
-            self.args = DictEntry()
+        kwargs = {}
+        args = ()
+
+        if isinstance(self.args, DictEntry):
+            kwargs = self.args
+        elif isinstance(self.args, ListEntry):
+            args = self.args
 
         if self.call is False:
             return self.obj
@@ -148,9 +153,9 @@ class ModuleEntry(Entry):
                 raise TypeError(msg)
 
             if self.lazy:
-                return FnWithKwargs(fn=self.obj, kwargs=self.args)
+                return FnWithKwargs(fn=self.obj, args=args, kwargs=kwargs)
 
-            return self.obj(**self.args)
+            return self.obj(*args, **kwargs)
 
         if not hasattr(self.obj, self.call):
             msg = f"'{self.obj}' has no attribute '{self.call}'"
@@ -163,6 +168,6 @@ class ModuleEntry(Entry):
             raise TypeError(msg)
 
         if self.lazy:
-            return FnWithKwargs(fn=fn, kwargs=self.args)
+            return FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
 
-        return fn(**self.args)
+        return fn(*args, **kwargs)

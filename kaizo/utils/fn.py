@@ -7,11 +7,13 @@ R = TypeVar("R")
 
 class FnWithKwargs(Generic[R]):
     fn: Callable[..., R]
+    args: tuple[str] | None
     kwargs: dict[str] | None
 
     def __init__(
         self,
         fn: Callable[..., R],
+        args: tuple[str] | None = None,
         kwargs: dict[str] | None = None,
     ) -> None:
         self.fn = fn
@@ -19,11 +21,15 @@ class FnWithKwargs(Generic[R]):
         if kwargs is None:
             kwargs = {}
 
+        self.args = args
         self.kwargs = kwargs
 
     def __call__(self, *args, **kwargs) -> R:
         call_kwargs = deepcopy(self.kwargs)
         call_kwargs.update(kwargs)
+
+        if self.args is not None:
+            args = self.args
 
         return self.fn(*args, **call_kwargs)
 

@@ -72,24 +72,38 @@ class ConfigParser:
     def _resolve_string(self, key: str, entry: str) -> Entry:
         if entry.startswith("args."):
             key = entry.split(".")[1]
-            return self.variables.get(key)
+
+            return (
+                FieldEntry(key=key, value=self.kwargs[key])
+                if key in self.kwargs
+                else self.variables.get(key)
+            )
 
         return FieldEntry(key=key, value=entry)
 
     def _resolve_list(self, key: str, entry: list) -> FieldEntry[list]:
-        return FieldEntry(key=key, value=ListEntry([self._resolve_entry(e) for e in entry]))
+        return FieldEntry(
+            key=key,
+            value=ListEntry([self._resolve_entry(key, e) for e in entry]),
+        )
 
-    def _resolve_args(self, key: str, args: Any) -> DictEntry[str]:
-        resolved = DictEntry()
-
+    def _resolve_args(self, key: str, args: Any) -> DictEntry[str] | ListEntry:
         if isinstance(args, dict):
+            resolved = DictEntry()
             for k, v in args.items():
-                if k in self.kwargs:
-                    resolved[k] = self.kwargs[k]
-                else:
-                    resolved[k] = self._resolve_entry(key, v)
+                value = (
+                    FieldEntry(key=key, value=self.kwargs[k])
+                    if k in self.kwargs
+                    else self._resolve_entry(key, v)
+                )
 
-                self.variables[k] = resolved[k]
+                resolved[k] = value
+                self.variables[k] = value
+
+        if isinstance(args, list):
+            resolved = ListEntry()
+            for v in args:
+                resolved.append(self._resolve_entry(key, v))
 
         return resolved
 
@@ -100,7 +114,7 @@ class ConfigParser:
         if module_path is None or symbol_name is None:
             return FieldEntry(
                 key=key,
-                value=DictEntry({k: self._resolve_entry(v) for k, v in entry.items()}),
+                value=DictEntry({k: self._resolve_entry(key, v) for k, v in entry.items()}),
             )
 
         call = entry.get("call", True)
@@ -129,6 +143,9 @@ class ConfigParser:
         res = DictEntry()
 
         for k in self.config:
-            res[k] = self._resolve_entry(k, self.config[k])
+            value = self._resolve_entry(k, self.config[k])
+
+            res[k] = value
+            self.variables[k] = value
 
         return res
