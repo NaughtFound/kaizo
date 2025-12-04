@@ -9,6 +9,7 @@ on:
     types: [closed]
     branches:
       - main
+
 jobs:
   build-and-publish:
     if: github.event.pull_request.merged == true
@@ -32,11 +33,12 @@ jobs:
           import toml
           pyproject = toml.load("pyproject.toml")
           version = pyproject["project"]["version"]
-          print(f"::set-output name=version::{version}")
+          print(f"VERSION={version}" >> $GITHUB_OUTPUT)
+        shell: python
 
       - name: Create tag if it doesn't exist
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
+          VERSION=${{ steps.get_version.outputs.VERSION }}
           if git rev-parse "v$VERSION" >/dev/null 2>&1; then
             echo "Tag v$VERSION already exists. Skipping."
           else
