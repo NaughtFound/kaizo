@@ -9,6 +9,7 @@
         "Ghazanfari",
         "kaizo",
         "pyproject",
+        "pytest",
         "pyyaml",
         "setuptools"
     ],
