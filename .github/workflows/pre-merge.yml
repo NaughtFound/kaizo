@@ -34,7 +34,7 @@ jobs:
           ruff check
 
       - name: Checking spell errors
-        run: cspell * --no-progress
+        run: cspell kaizo/* tests/* --no-progress
 
   run-tests:
     runs-on: ubuntu-latest
