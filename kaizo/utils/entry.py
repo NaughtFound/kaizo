@@ -56,6 +56,9 @@ class DictEntry(MutableMapping, Generic[K]):
     def __len__(self) -> int:
         return self._data.__len__()
 
+    def __contains__(self, key: K) -> bool:
+        return self._data.__contains__(key)
+
 
 class ListEntry(MutableSequence):
     _data: list[Entry]
@@ -134,6 +137,16 @@ class ModuleEntry(Entry):
     call: Any
     lazy: bool
     args: DictEntry[str] | ListEntry | None = None
+    cache: Any | None = None
+
+    def _cache_call(self, fn: Any, args: tuple, kwargs: dict) -> Any:
+        if self.cache is None:
+            if self.lazy:
+                self.cache = FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
+            else:
+                self.cache = fn(*args, **kwargs)
+
+        return self.cache
 
     def __call__(self) -> Any | FnWithKwargs:
         kwargs = {}
@@ -152,10 +165,7 @@ class ModuleEntry(Entry):
                 msg = f"'{self.obj}' is not callable"
                 raise TypeError(msg)
 
-            if self.lazy:
-                return FnWithKwargs(fn=self.obj, args=args, kwargs=kwargs)
-
-            return self.obj(*args, **kwargs)
+            return self._cache_call(self.obj, args, kwargs)
 
         if not hasattr(self.obj, self.call):
             msg = f"'{self.obj}' has no attribute '{self.call}'"
@@ -167,7 +177,4 @@ class ModuleEntry(Entry):
             msg = f"{fn} is not callable"
             raise TypeError(msg)
 
-        if self.lazy:
-            return FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
-
-        return fn(*args, **kwargs)
+        return self._cache_call(fn, args, kwargs)
