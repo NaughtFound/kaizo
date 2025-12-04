@@ -6,7 +6,7 @@ R = TypeVar("R")
 
 
 class FnWithKwargs(Generic[R]):
-    fn: Callable
+    fn: Callable[..., R]
     kwargs: dict[str] | None
 
     def __init__(
