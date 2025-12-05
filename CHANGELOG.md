@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.0.1]
+
+### Fixed
+
+- adding `is_path_like` to check path-like strings
+
 ## [1.0.0]
 
 ### Added

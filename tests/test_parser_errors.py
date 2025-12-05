@@ -8,11 +8,11 @@ dummy_config = """
 dummy: this_is_dummy
 """
 
-missing_config = """
+missing_local_config = """
 local: missing.py
 """
 
-not_exist_config = """
+module_not_exist_config = """
 bad:
   module: does_not_exist
   source: thing
@@ -43,10 +43,14 @@ import:
 bad_key: dummy.not_here
 """
 
+local_entry_not_found_config = """
+bad_key: .not_here
+"""
+
 
 def test_missing_local_module(tmp_path: Path) -> None:
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(missing_config)
+    cfg.write_text(missing_local_config)
 
     with pytest.raises(FileNotFoundError):
         ConfigParser(cfg)
@@ -54,7 +58,7 @@ def test_missing_local_module(tmp_path: Path) -> None:
 
 def test_import_error(tmp_path: Path) -> None:
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(not_exist_config)
+    cfg.write_text(module_not_exist_config)
 
     parser = ConfigParser(cfg)
 
@@ -107,6 +111,16 @@ def test_entry_not_found(tmp_path: Path) -> None:
 
     cfg = tmp_path / "cfg.yml"
     cfg.write_text(entry_not_found_config.format(tmp_path=tmp_path))
+
+    parser = ConfigParser(cfg)
+
+    with pytest.raises(KeyError, match="entry not found, got not_here"):
+        parser.parse()
+
+
+def test_local_entry_not_found(tmp_path: Path) -> None:
+    cfg = tmp_path / "cfg.yml"
+    cfg.write_text(local_entry_not_found_config)
 
     parser = ConfigParser(cfg)
 
