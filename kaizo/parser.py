@@ -103,23 +103,23 @@ class ConfigParser:
             return FieldEntry(key=key, value=entry)
 
         if not entry_key:
-            return (
-                FieldEntry(key=entry_value, value=self.kwargs[entry_value])
-                if entry_value in self.kwargs
-                else self.variables.get(entry_value)
-            )
+            if entry_value in self.kwargs:
+                return FieldEntry(key=entry_value, value=self.kwargs[entry_value])
 
-        if self.modules is None:
-            msg = "import module is not given"
-            raise ValueError(msg)
+            parsed_entry = self.variables.get(entry_value)
 
-        module = self.modules.get(entry_key)
+        else:
+            if self.modules is None:
+                msg = "import module is not given"
+                raise ValueError(msg)
 
-        if module is None:
-            msg = f"keyword not found, got {entry_key}"
-            raise ValueError(msg)
+            module = self.modules.get(entry_key)
 
-        parsed_entry = module.variables.get(entry_value)
+            if module is None:
+                msg = f"keyword not found, got {entry_key}"
+                raise ValueError(msg)
+
+            parsed_entry = module.variables.get(entry_value)
 
         if parsed_entry is None:
             msg = f"entry not found, got {entry_value}"
