@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, split_by_first_dot
+from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, extract_variable
 
 
 class ConfigParser:
@@ -97,7 +97,7 @@ class ConfigParser:
         return self._load_object(module_path, symbol_name)
 
     def _resolve_string(self, key: str, entry: str) -> Entry:
-        entry_key, entry_value = split_by_first_dot(entry)
+        entry_key, entry_value = extract_variable(entry)
 
         if entry_key is None:
             return FieldEntry(key=key, value=entry)
