@@ -11,7 +11,7 @@ use_args:
   source: sqrt
   call: true
   args:
-    - args.val
+    - .val
 """
 
 

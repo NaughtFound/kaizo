@@ -10,7 +10,7 @@ call_me:
   source: pow
   call: true
   args:
-    - args.injected
+    - .injected
     - 2
 """
 
