@@ -30,7 +30,7 @@ run02:
     module: local
     source: fn2
     args:
-        n: .n
+        n: .{n}
 """
 
 

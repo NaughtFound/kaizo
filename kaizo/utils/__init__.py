@@ -1,4 +1,4 @@
-from .common import split_by_first_dot
+from .common import extract_variable
 from .entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
 from .fn import FnWithKwargs
 
@@ -9,5 +9,5 @@ __all__ = (
     "FnWithKwargs",
     "ListEntry",
     "ModuleEntry",
-    "split_by_first_dot",
+    "extract_variable",
 )

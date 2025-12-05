@@ -28,23 +28,23 @@ import:
 """
 
 module_not_given_config = """
-bad_ref: missing_module.some_key
+bad_ref: missing_module.{some_key}
 """
 
 keyword_not_found_config = """
 import:
   dummy: {tmp_path}/dummy.yml
-bad_ref: missing_module.some_key
+bad_ref: missing_module.{some_key}
 """
 
 entry_not_found_config = """
 import:
   dummy: {tmp_path}/dummy.yml
-bad_key: dummy.not_here
+bad_key: dummy.{not_here}
 """
 
 local_entry_not_found_config = """
-bad_key: .not_here
+bad_key: .{not_here}
 """
 
 
@@ -97,7 +97,12 @@ def test_keyword_not_found(tmp_path: Path) -> None:
     dummy_module.write_text(dummy_config)
 
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(keyword_not_found_config.format(tmp_path=tmp_path))
+    cfg.write_text(
+        keyword_not_found_config.format(
+            tmp_path=tmp_path,
+            some_key="{some_key}",
+        )
+    )
 
     parser = ConfigParser(cfg)
 
@@ -110,7 +115,12 @@ def test_entry_not_found(tmp_path: Path) -> None:
     dummy_module.write_text(dummy_config)
 
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(entry_not_found_config.format(tmp_path=tmp_path))
+    cfg.write_text(
+        entry_not_found_config.format(
+            tmp_path=tmp_path,
+            not_here="{not_here}",
+        )
+    )
 
     parser = ConfigParser(cfg)
 

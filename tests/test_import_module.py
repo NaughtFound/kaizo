@@ -11,7 +11,7 @@ x: {X}
 config = """
 import:
   m: {tmp_path}/module.yml
-run: m.x
+run: m.{x}
 """
 
 
@@ -20,7 +20,7 @@ def test_import_module(tmp_path: Path) -> None:
     module.write_text(module_config)
 
     cfg_file = tmp_path / "cfg.yml"
-    cfg_file.write_text(config.format(tmp_path=tmp_path))
+    cfg_file.write_text(config.format(tmp_path=tmp_path, x="{x}"))
 
     parser = ConfigParser(cfg_file)
     out = parser.parse()
