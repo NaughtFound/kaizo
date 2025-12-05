@@ -25,7 +25,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip uv toml
+        run: python -m pip install --upgrade pip uv
 
       - name: Read version from pyproject.toml
         uses: maybe-hello-world/pyproject-check-version@v4
