@@ -55,3 +55,30 @@ jobs:
 
       - name: Run tests
         run: uv run pytest -vv
+
+  check-version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read version from pyproject.toml
+        uses: maybe-hello-world/pyproject-check-version@v4
+        id: versioncheck
+        with:
+          pyproject-path: "./pyproject.toml"
+
+      - name: Show version comparison
+        run: |
+          echo "Local version:  ${{ steps.versioncheck.outputs.local_version }}"
+          echo "PyPI version:   ${{ steps.versioncheck.outputs.public_version }}"
+          echo "Local > PyPI ?: ${{ steps.versioncheck.outputs.local_version_is_higher }}"
+
+      - name: Fail if version has not been bumped
+        run: |
+          if [ "${{ steps.versioncheck.outputs.local_version_is_higher }}" != "true" ]; then
+            echo "❌ Version NOT bumped. Current version is not higher than PyPI."
+            exit 1
+          fi
+          echo "✅ Version bump detected."

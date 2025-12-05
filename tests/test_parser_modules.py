@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 VAL = 16
 

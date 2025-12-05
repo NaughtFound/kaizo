@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.0.0]
+
+### Added
+
+- parser now supports import modules
+
+### Changed
+
+- module rearranged
+- `args.` changed to `.`
+
 ## [0.2.1]
 
 ### Added

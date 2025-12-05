@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 RESULT = 1
 
@@ -30,7 +30,7 @@ run02:
     module: local
     source: fn2
     args:
-        n: args.n
+        n: .n
 """
 
 

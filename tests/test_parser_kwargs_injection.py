@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 X = 5
 
@@ -10,7 +10,7 @@ call_me:
   source: pow
   call: true
   args:
-    - args.injected
+    - .injected
     - 2
 """
 

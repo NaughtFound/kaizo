@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
+from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, split_by_first_dot
 
 
 class ConfigParser:
@@ -15,6 +15,7 @@ class ConfigParser:
     local: ModuleType | None
     variables: DictEntry[str]
     kwargs: dict[str]
+    modules: dict[str, "ConfigParser"] | None
 
     def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
         root, _ = os.path.split(config_path)
@@ -29,6 +30,17 @@ class ConfigParser:
             self.local = self._load_python_module(root / local_path)
         else:
             self.local = None
+
+        if "import" in self.config:
+            modules = self.config.pop("import")
+
+            if not isinstance(modules, dict):
+                msg = f"import module should be a dict, got {type(modules)}"
+                raise TypeError(msg)
+
+            self.modules = self._import_modules(modules, kwargs)
+        else:
+            self.modules = None
 
         self.variables = DictEntry(resolve=False)
         self.kwargs = kwargs or {}
@@ -47,6 +59,21 @@ class ConfigParser:
         module = module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
+
+    def _import_modules(
+        self,
+        modules: dict[str, str],
+        kwargs: dict[str] | None = None,
+    ) -> dict[str, "ConfigParser"]:
+        module_dict = {}
+
+        for module_name, module_path in modules.items():
+            parser = ConfigParser(module_path, kwargs)
+            parser.parse()
+
+            module_dict[module_name] = parser
+
+        return module_dict
 
     def _load_object(self, module_path: str, object_name: str) -> Any:
         try:
@@ -70,16 +97,35 @@ class ConfigParser:
         return self._load_object(module_path, symbol_name)
 
     def _resolve_string(self, key: str, entry: str) -> Entry:
-        if entry.startswith("args."):
-            key = entry.split(".")[1]
+        entry_key, entry_value = split_by_first_dot(entry)
 
+        if entry_key is None:
+            return FieldEntry(key=key, value=entry)
+
+        if not entry_key:
             return (
-                FieldEntry(key=key, value=self.kwargs[key])
-                if key in self.kwargs
-                else self.variables.get(key)
+                FieldEntry(key=entry_value, value=self.kwargs[entry_value])
+                if entry_value in self.kwargs
+                else self.variables.get(entry_value)
             )
 
-        return FieldEntry(key=key, value=entry)
+        if self.modules is None:
+            msg = "import module is not given"
+            raise ValueError(msg)
+
+        module = self.modules.get(entry_key)
+
+        if module is None:
+            msg = f"keyword not found, got {entry_key}"
+            raise ValueError(msg)
+
+        parsed_entry = module.variables.get(entry_value)
+
+        if parsed_entry is None:
+            msg = f"entry not found, got {entry_value}"
+            raise KeyError(msg)
+
+        return parsed_entry
 
     def _resolve_list(self, key: str, entry: list) -> FieldEntry[list]:
         return FieldEntry(

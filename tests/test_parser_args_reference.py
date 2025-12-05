@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 VAL = 4
 
@@ -11,7 +11,7 @@ use_args:
   source: sqrt
   call: true
   args:
-    - args.val
+    - .val
 """
 
 

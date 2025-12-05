@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 X = 2
 Y = 3
