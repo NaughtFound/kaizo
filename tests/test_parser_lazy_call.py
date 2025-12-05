@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from kaizo.utils.fn import FnWithKwargs
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
+from kaizo.utils import FnWithKwargs
 
 VAL = 9
 

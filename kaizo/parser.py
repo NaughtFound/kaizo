@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
+from .utils.entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
 
 
 class ConfigParser:

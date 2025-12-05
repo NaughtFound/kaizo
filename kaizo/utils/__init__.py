@@ -1,7 +1,11 @@
+from .entry import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry
 from .fn import FnWithKwargs
-from .parser import ConfigParser
 
 __all__ = (
-    "ConfigParser",
+    "DictEntry",
+    "Entry",
+    "FieldEntry",
     "FnWithKwargs",
+    "ListEntry",
+    "ModuleEntry",
 )

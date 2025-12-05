@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from kaizo.utils.entry import DictEntry
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
+from kaizo.utils import DictEntry
 
 A = 10
 B = "hello"

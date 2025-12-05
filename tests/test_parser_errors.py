@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from kaizo.utils.parser import ConfigParser
+from kaizo import ConfigParser
 
 missing_config = """
 local: missing.py
