@@ -56,7 +56,7 @@ jobs:
           uv sync --extra test
 
       - name: Run tests
-        run: uv run pytest -vv
+        run: uv run pytest -vv tests/*
 
   check-version:
     runs-on: ubuntu-latest
