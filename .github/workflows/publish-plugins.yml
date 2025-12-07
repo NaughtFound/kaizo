@@ -27,11 +27,12 @@ jobs:
       - name: Detect changed plugin directories
         id: detect
         run: |
-          # Find modified plugin directories under plugins/*
-          CHANGED=$(git diff --name-only origin/main...HEAD | grep "^plugins/" | cut -d/ -f1-2 | sort -u || true)
-
-          # Convert to JSON array
+          CHANGED=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.merge_commit_sha }} \
+            | grep "^plugins/" \
+            | cut -d/ -f1-2 \
+            | sort -u || true)
           JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s -c .)
+          [ -z "$JSON" ] && JSON="[]"
           echo "plugin_dirs=$JSON" >> $GITHUB_OUTPUT
 
   build-and-publish:
