@@ -1,0 +1,86 @@
+name: Publish Kaizo Plugins
+
+permissions:
+  id-token: write
+  contents: write
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  detect-changed-plugins:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      plugin_dirs: ${{ steps.detect.outputs.plugin_dirs }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed plugin directories
+        id: detect
+        run: |
+          # Find modified plugin directories under plugins/*
+          CHANGED=$(git diff --name-only origin/main...HEAD | grep "^plugins/" | cut -d/ -f1-2 | sort -u || true)
+
+          # Convert to JSON array
+          JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s .)
+
+          echo "plugin_dirs=$JSON" >> $GITHUB_OUTPUT
+
+  build-and-publish:
+    needs: detect-changed-plugins
+    if: ${{ needs.detect-changed-plugins.outputs.plugin_dirs != '[]' }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip uv
+
+      - name: Read version from pyproject.toml
+        uses: maybe-hello-world/pyproject-check-version@v4
+        id: versioncheck
+        with:
+          pyproject-path: "./pyproject.toml"
+
+      - name: Create tag if it doesn't exist
+        run: |
+          VERSION=${{ steps.versioncheck.outputs.local_version }}
+          PLUGIN_NAME=$(basename "${{ matrix.plugin_dir }}")
+          TAG="${PLUGIN_NAME}-v${VERSION}"
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists. Skipping."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Build plugin package
+        run: uv build
+
+      - name: Publish plugin to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.13.0
