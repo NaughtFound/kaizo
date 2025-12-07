@@ -1,10 +1,8 @@
-# HF Plugin for Kaizo
+# Hugging Face Plugin for Kaizo
 
 ## Installation
 
-The plugin is an **optional dependency** for Kaizo. You can install it in one of the following ways:
-
-### 1. Install Kaizo with the HF plugin
+The plugin is an **optional dependency** for Kaizo. You can install it in the following ways:
 
 ```bash
 pip install "kaizo[hf]"
