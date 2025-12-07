@@ -1,0 +1,133 @@
+name: Pre-Merge Checks Kaizo Plugins
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "plugins/**"
+
+jobs:
+  detect-changed-plugins:
+    runs-on: ubuntu-latest
+    outputs:
+      plugin_dirs: ${{ steps.detect.outputs.plugin_dirs }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed plugin directories
+        id: detect
+        run: |
+          # Find modified plugin directories under plugins/*
+          CHANGED=$(git diff --name-only origin/main...HEAD | grep "^plugins/" | cut -d/ -f1-2 | sort -u || true)
+
+          # Convert to JSON array
+          JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s -c .)
+          echo "plugin_dirs=$JSON" >> $GITHUB_OUTPUT
+
+  check-lint-format:
+    needs: detect-changed-plugins
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip ruff
+          npm install -g cspell
+
+      - name: Checking format and lint
+        run: |
+          ruff format --check
+          ruff check
+
+      - name: Checking spell errors
+        run: cspell kaizo/* tests/* --no-progress
+
+  run-tests:
+    needs: detect-changed-plugins
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip uv
+          uv sync --extra test
+
+      - name: Run tests
+        run: uv run pytest -vv
+
+  check-version:
+    needs: detect-changed-plugins
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read version from pyproject.toml
+        uses: maybe-hello-world/pyproject-check-version@v4
+        id: versioncheck
+        with:
+          pyproject-path: "${{ matrix.plugin_dir }}/pyproject.toml"
+
+      - name: Show version comparison
+        run: |
+          echo "Local version:  ${{ steps.versioncheck.outputs.local_version }}"
+          echo "PyPI version:   ${{ steps.versioncheck.outputs.public_version }}"
+          echo "Local > PyPI ?: ${{ steps.versioncheck.outputs.local_version_is_higher }}"
+
+      - name: Fail if version has not been bumped
+        run: |
+          if [ "${{ steps.versioncheck.outputs.local_version_is_higher }}" != "true" ]; then
+            echo "❌ Version NOT bumped. Current version is not higher than PyPI."
+            exit 1
+          fi
+          echo "✅ Version bump detected."

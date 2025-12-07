@@ -9,6 +9,8 @@ on:
     types: [closed]
     branches:
       - main
+    paths:
+      - "plugins/**"
 
 jobs:
   detect-changed-plugins:
@@ -29,8 +31,7 @@ jobs:
           CHANGED=$(git diff --name-only origin/main...HEAD | grep "^plugins/" | cut -d/ -f1-2 | sort -u || true)
 
           # Convert to JSON array
-          JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s .)
-
+          JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s -c .)
           echo "plugin_dirs=$JSON" >> $GITHUB_OUTPUT
 
   build-and-publish:
@@ -62,7 +63,7 @@ jobs:
         uses: maybe-hello-world/pyproject-check-version@v4
         id: versioncheck
         with:
-          pyproject-path: "./pyproject.toml"
+          pyproject-path: "${{ matrix.plugin_dir }}/pyproject.toml"
 
       - name: Create tag if it doesn't exist
         run: |
