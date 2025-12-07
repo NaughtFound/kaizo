@@ -1,15 +1,44 @@
-name: Pre-Merge Checks
+name: Pre-Merge Checks Kaizo Plugins
 
 on:
   pull_request:
     branches:
       - main
-    paths-ignore:
+    paths:
       - "plugins/**"
 
 jobs:
-  check-lint-format:
+  detect-changed-plugins:
     runs-on: ubuntu-latest
+    outputs:
+      plugin_dirs: ${{ steps.detect.outputs.plugin_dirs }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed plugin directories
+        id: detect
+        run: |
+          # Find modified plugin directories under plugins/*
+          CHANGED=$(git diff --name-only origin/main...HEAD | grep "^plugins/" | cut -d/ -f1-2 | sort -u || true)
+
+          # Convert to JSON array
+          JSON=$(printf '%s\n' "$CHANGED" | jq -R . | jq -s -c .)
+          echo "plugin_dirs=$JSON" >> $GITHUB_OUTPUT
+
+  check-lint-format:
+    needs: detect-changed-plugins
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
 
     steps:
       - name: Checkout repository
@@ -39,7 +68,16 @@ jobs:
         run: cspell kaizo/* tests/* --no-progress
 
   run-tests:
+    needs: detect-changed-plugins
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
 
     steps:
       - name: Checkout repository
@@ -52,14 +90,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip uv
-          uv sync --extra test
+          python -m pip install --upgrade pip uv pytest
 
       - name: Run tests
-        run: uv run pytest -vv tests/*
+        run: uv run pytest -vv
 
   check-version:
+    needs: detect-changed-plugins
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        plugin_dir: ${{ fromJson(needs.detect-changed-plugins.outputs.plugin_dirs) }}
+
+    defaults:
+      run:
+        working-directory: ${{ matrix.plugin_dir }}
 
     steps:
       - name: Checkout repository
@@ -69,7 +115,7 @@ jobs:
         uses: maybe-hello-world/pyproject-check-version@v4
         id: versioncheck
         with:
-          pyproject-path: "./pyproject.toml"
+          pyproject-path: "${{ matrix.plugin_dir }}/pyproject.toml"
 
       - name: Show version comparison
         run: |
