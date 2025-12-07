@@ -9,6 +9,8 @@ on:
     types: [closed]
     branches:
       - main
+    paths-ignore:
+      - "plugins/**"
 
 jobs:
   build-and-publish:

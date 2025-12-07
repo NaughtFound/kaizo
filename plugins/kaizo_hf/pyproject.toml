@@ -6,7 +6,7 @@ authors = [{ name = "Mohammad Ghazanfari", email = "mgh.5225@gmail.com" }]
 readme = "README.md"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
-dependencies = ["kaizo>=1.1.0"]
+dependencies = ["kaizo>=1.1.1"]
 
 classifiers = [
     "Programming Language :: Python :: 3",
