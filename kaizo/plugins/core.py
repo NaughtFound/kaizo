@@ -4,7 +4,7 @@ from typing import Self
 from kaizo.utils.entry import DictEntry, ListEntry
 
 
-@dataclass(frozen=True)
+@dataclass
 class PluginMetadata:
     args: DictEntry[str] | ListEntry | None = None
 
@@ -22,7 +22,7 @@ class Plugin:
         elif isinstance(metadata.args, ListEntry):
             args = metadata.args
 
-        plugin = cls.__init__(*args, **kwargs)
+        plugin = cls(*args, **kwargs)
         plugin.metadata = metadata
 
         return plugin

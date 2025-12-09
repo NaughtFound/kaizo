@@ -32,6 +32,9 @@ class ConfigParser:
 
         root = Path(root)
 
+        self.variables = DictEntry(resolve=False)
+        self.kwargs = kwargs or {}
+
         with Path.open(config_path) as file:
             self.config = yaml.safe_load(file)
 
@@ -62,9 +65,6 @@ class ConfigParser:
             self.plugins = self._import_plugins(plugins)
         else:
             self.plugins = None
-
-        self.variables = DictEntry(resolve=False)
-        self.kwargs = kwargs or {}
 
     def _load_python_module(self, path: Path) -> ModuleType:
         if not path.is_file():
