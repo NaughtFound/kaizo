@@ -7,6 +7,8 @@ from typing import Any
 
 import yaml
 
+from kaizo.plugins import Plugin, PluginMetadata
+
 from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, extract_variable
 
 
@@ -16,6 +18,7 @@ class ConfigParser:
     variables: DictEntry[str]
     kwargs: dict[str]
     modules: dict[str, "ConfigParser"] | None
+    plugins: dict[str, Plugin] | None
 
     def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
         root, _ = os.path.split(config_path)
@@ -41,6 +44,15 @@ class ConfigParser:
             self.modules = self._import_modules(modules, kwargs)
         else:
             self.modules = None
+
+        if "plugins" in self.config:
+            plugins = self.config.pop("plugins")
+
+            if not isinstance(plugins, dict):
+                msg = f"plugins should be a dict, got {type(plugins)}"
+                raise TypeError(msg)
+
+            self.plugins = self._import_plugins(plugins)
 
         self.variables = DictEntry(resolve=False)
         self.kwargs = kwargs or {}
@@ -74,6 +86,46 @@ class ConfigParser:
             module_dict[module_name] = parser
 
         return module_dict
+
+    def _import_plugins(
+        self,
+        plugins: dict[str],
+    ) -> dict[str, Plugin]:
+        metadata = PluginMetadata()
+        plugin_dict = {}
+
+        for plugin_name, plugin_module in plugins.items():
+            plugin_path = f"kaizo.plugins.{plugin_name}"
+
+            if isinstance(plugin_module, dict):
+                source = plugin_module.get("source")
+                args = plugin_module.get("args", {})
+
+                resolved_args = self._resolve_args(plugin_name, args)
+                metadata.args = resolved_args
+
+                if source is None:
+                    msg = f"source is required for {plugin_name} plugin"
+                    raise ValueError(msg)
+
+                plugin = self._load_object(plugin_path, source)
+
+            elif isinstance(plugin_module, str):
+                plugin = self._load_object(plugin_path, plugin_module)
+
+            else:
+                msg = f"plugin {plugin_name} is not a valid type"
+                raise TypeError(msg)
+
+            if not issubclass(plugin, Plugin):
+                msg = f"loaded {plugin_name} is not a `Plugin`"
+                raise TypeError(msg)
+
+            obj = plugin.dispatch(metadata=metadata)
+
+            plugin_dict[plugin_name] = obj
+
+        return plugin_dict
 
     def _load_object(self, module_path: str, object_name: str) -> Any:
         try:
