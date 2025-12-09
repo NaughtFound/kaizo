@@ -7,9 +7,16 @@ from typing import Any
 
 import yaml
 
-from kaizo.plugins import Plugin, PluginMetadata
-
-from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, extract_variable
+from .plugins import Plugin, PluginMetadata
+from .utils import (
+    DictEntry,
+    Entry,
+    FieldEntry,
+    FnWithKwargs,
+    ListEntry,
+    ModuleEntry,
+    extract_variable,
+)
 
 
 class ConfigParser:
@@ -18,7 +25,7 @@ class ConfigParser:
     variables: DictEntry[str]
     kwargs: dict[str]
     modules: dict[str, "ConfigParser"] | None
-    plugins: dict[str, Plugin] | None
+    plugins: dict[str, FnWithKwargs[Plugin]] | None
 
     def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
         root, _ = os.path.split(config_path)
@@ -53,6 +60,8 @@ class ConfigParser:
                 raise TypeError(msg)
 
             self.plugins = self._import_plugins(plugins)
+        else:
+            self.plugins = None
 
         self.variables = DictEntry(resolve=False)
         self.kwargs = kwargs or {}
@@ -90,7 +99,7 @@ class ConfigParser:
     def _import_plugins(
         self,
         plugins: dict[str],
-    ) -> dict[str, Plugin]:
+    ) -> dict[str, FnWithKwargs[Plugin]]:
         metadata = PluginMetadata()
         plugin_dict = {}
 
@@ -121,7 +130,7 @@ class ConfigParser:
                 msg = f"loaded {plugin_name} is not a `Plugin`"
                 raise TypeError(msg)
 
-            obj = plugin.dispatch(metadata=metadata)
+            obj = FnWithKwargs[Plugin](fn=plugin.dispatch, kwargs={"metadata": metadata})
 
             plugin_dict[plugin_name] = obj
 
@@ -145,6 +154,19 @@ class ConfigParser:
                 raise ValueError(msg)
 
             return getattr(self.local, symbol_name)
+
+        if module_path == "plugin":
+            if self.plugins is None:
+                msg = "plugins are not given"
+                raise ValueError(msg)
+
+            obj = self.plugins.get(symbol_name)
+
+            if obj is None:
+                msg = f"plugin {symbol_name} not found"
+                raise ValueError(msg)
+
+            return obj.__call__()
 
         return self._load_object(module_path, symbol_name)
 
