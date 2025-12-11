@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.2.0]
+
+### Added
+
+- `Plugin` added
+- new test cases added for plugin support
+
 ## [1.1.1]
 
 ### Added

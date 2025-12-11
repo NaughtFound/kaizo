@@ -7,7 +7,16 @@ from typing import Any
 
 import yaml
 
-from .utils import DictEntry, Entry, FieldEntry, ListEntry, ModuleEntry, extract_variable
+from .plugins import Plugin, PluginMetadata
+from .utils import (
+    DictEntry,
+    Entry,
+    FieldEntry,
+    FnWithKwargs,
+    ListEntry,
+    ModuleEntry,
+    extract_variable,
+)
 
 
 class ConfigParser:
@@ -16,11 +25,15 @@ class ConfigParser:
     variables: DictEntry[str]
     kwargs: dict[str]
     modules: dict[str, "ConfigParser"] | None
+    plugins: dict[str, FnWithKwargs[Plugin]] | None
 
     def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
         root, _ = os.path.split(config_path)
 
         root = Path(root)
+
+        self.variables = DictEntry(resolve=False)
+        self.kwargs = kwargs or {}
 
         with Path.open(config_path) as file:
             self.config = yaml.safe_load(file)
@@ -42,8 +55,16 @@ class ConfigParser:
         else:
             self.modules = None
 
-        self.variables = DictEntry(resolve=False)
-        self.kwargs = kwargs or {}
+        if "plugins" in self.config:
+            plugins = self.config.pop("plugins")
+
+            if not isinstance(plugins, dict):
+                msg = f"plugins should be a dict, got {type(plugins)}"
+                raise TypeError(msg)
+
+            self.plugins = self._import_plugins(plugins)
+        else:
+            self.plugins = None
 
     def _load_python_module(self, path: Path) -> ModuleType:
         if not path.is_file():
@@ -75,6 +96,46 @@ class ConfigParser:
 
         return module_dict
 
+    def _import_plugins(
+        self,
+        plugins: dict[str],
+    ) -> dict[str, FnWithKwargs[Plugin]]:
+        metadata = PluginMetadata()
+        plugin_dict = {}
+
+        for plugin_name, plugin_module in plugins.items():
+            plugin_path = f"kaizo.plugins.{plugin_name}"
+
+            if isinstance(plugin_module, dict):
+                source = plugin_module.get("source")
+                args = plugin_module.get("args", {})
+
+                resolved_args = self._resolve_args(plugin_name, args)
+                metadata.args = resolved_args
+
+                if source is None:
+                    msg = f"source is required for {plugin_name} plugin"
+                    raise ValueError(msg)
+
+                plugin = self._load_object(plugin_path, source)
+
+            elif isinstance(plugin_module, str):
+                plugin = self._load_object(plugin_path, plugin_module)
+
+            else:
+                msg = f"plugin {plugin_name} is not a valid type"
+                raise TypeError(msg)
+
+            if not issubclass(plugin, Plugin):
+                msg = f"loaded {plugin_name} is not a `Plugin`"
+                raise TypeError(msg)
+
+            obj = FnWithKwargs[Plugin](fn=plugin.dispatch, kwargs={"metadata": metadata})
+
+            plugin_dict[plugin_name] = obj
+
+        return plugin_dict
+
     def _load_object(self, module_path: str, object_name: str) -> Any:
         try:
             module = importlib.import_module(module_path)
@@ -93,6 +154,19 @@ class ConfigParser:
                 raise ValueError(msg)
 
             return getattr(self.local, symbol_name)
+
+        if module_path == "plugin":
+            if self.plugins is None:
+                msg = "plugins are not given"
+                raise ValueError(msg)
+
+            obj = self.plugins.get(symbol_name)
+
+            if obj is None:
+                msg = f"plugin {symbol_name} not found"
+                raise ValueError(msg)
+
+            return obj.__call__()
 
         return self._load_object(module_path, symbol_name)
 
