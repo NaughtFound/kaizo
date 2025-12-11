@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from copy import deepcopy
+from functools import lru_cache
 from typing import Generic, TypeVar
 
 R = TypeVar("R")
@@ -7,16 +8,21 @@ R = TypeVar("R")
 
 class FnWithKwargs(Generic[R]):
     fn: Callable[..., R]
-    args: tuple[str] | None
+    args: tuple | None
     kwargs: dict[str] | None
 
     def __init__(
         self,
         fn: Callable[..., R],
-        args: tuple[str] | None = None,
+        args: tuple | None = None,
         kwargs: dict[str] | None = None,
+        *,
+        cache: bool = False,
     ) -> None:
-        self.fn = fn
+        if cache:
+            self.fn = lru_cache()(fn)
+        else:
+            self.fn = fn
 
         if kwargs is None:
             kwargs = {}

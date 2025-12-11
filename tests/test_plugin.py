@@ -3,6 +3,10 @@ from pathlib import Path
 
 from .common import create_fake_plugin
 
+X = 7
+Y = 6
+VAL = 2
+
 correct_plugin_config = """
 plugins:
   correct: MyPlugin
@@ -13,9 +17,6 @@ from kaizo import Plugin
 class MyPlugin(Plugin):
     pass
 """
-
-X = 7
-Y = 6
 
 plugin_with_args_config = f"""
 plugins:
@@ -33,8 +34,6 @@ class MyPlugin(Plugin):
         self.x = x
         self.y = y
 """
-
-VAL = 2
 
 using_plugin_config = f"""
 plugins:

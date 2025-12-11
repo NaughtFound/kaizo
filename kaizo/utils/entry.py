@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Generic, SupportsIndex, TypeVar
 
 from .fn import FnWithKwargs
@@ -137,18 +137,13 @@ class ModuleEntry(Entry):
     call: Any
     lazy: bool
     args: DictEntry[str] | ListEntry | None = None
-    cache: Any | None = None
+    cache: bool = True
+    fn: FnWithKwargs = field(init=False)
 
-    def _cache_call(self, fn: Any, args: tuple, kwargs: dict) -> Any:
-        if self.cache is None:
-            if self.lazy:
-                self.cache = FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
-            else:
-                self.cache = fn(*args, **kwargs)
+    def __post_init__(self) -> None:
+        if self.call is False:
+            return
 
-        return self.cache
-
-    def __call__(self) -> Any | FnWithKwargs:
         kwargs = {}
         args = ()
 
@@ -157,15 +152,13 @@ class ModuleEntry(Entry):
         elif isinstance(self.args, ListEntry):
             args = self.args
 
-        if self.call is False:
-            return self.obj
-
         if self.call is True:
             if not callable(self.obj):
                 msg = f"'{self.obj}' is not callable"
                 raise TypeError(msg)
 
-            return self._cache_call(self.obj, args, kwargs)
+            self.fn = FnWithKwargs(fn=self.obj, args=args, kwargs=kwargs, cache=self.cache)
+            return
 
         if not hasattr(self.obj, self.call):
             msg = f"'{self.obj}' has no attribute '{self.call}'"
@@ -174,7 +167,16 @@ class ModuleEntry(Entry):
         fn = getattr(self.obj, self.call)
 
         if not callable(fn):
-            msg = f"{fn} is not callable"
+            msg = f"'{fn}' is not callable"
             raise TypeError(msg)
 
-        return self._cache_call(fn, args, kwargs)
+        self.fn = FnWithKwargs(fn=fn, args=args, kwargs=kwargs, cache=self.cache)
+
+    def __call__(self) -> Any | FnWithKwargs:
+        if self.call is False:
+            return self.obj
+
+        if self.lazy:
+            return self.fn
+
+        return self.fn.__call__()

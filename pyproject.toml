@@ -1,6 +1,6 @@
 [project]
 name = "kaizo"
-version = "1.2.0"
+version = "1.2.1"
 description = "A modular YML config file parser and runner."
 authors = [{ name = "Mohammad Ghazanfari", email = "mgh.5225@gmail.com" }]
 readme = "README.md"

@@ -40,7 +40,11 @@ class ConfigParser:
 
         if "local" in self.config:
             local_path = Path(self.config.pop("local"))
-            self.local = self._load_python_module(root / local_path)
+
+            if not local_path.is_absolute():
+                local_path = root / local_path
+
+            self.local = self._load_python_module(local_path)
         else:
             self.local = None
 
@@ -51,7 +55,7 @@ class ConfigParser:
                 msg = f"import module should be a dict, got {type(modules)}"
                 raise TypeError(msg)
 
-            self.modules = self._import_modules(modules, kwargs)
+            self.modules = self._import_modules(root, modules, kwargs)
         else:
             self.modules = None
 
@@ -83,12 +87,18 @@ class ConfigParser:
 
     def _import_modules(
         self,
+        root: Path,
         modules: dict[str, str],
         kwargs: dict[str] | None = None,
     ) -> dict[str, "ConfigParser"]:
         module_dict = {}
 
-        for module_name, module_path in modules.items():
+        for module_name, module_path_str in modules.items():
+            module_path = Path(module_path_str)
+
+            if not module_path.is_absolute():
+                module_path = root / module_path
+
             parser = ConfigParser(module_path, kwargs)
             parser.parse()
 
@@ -240,12 +250,20 @@ class ConfigParser:
         call = entry.get("call", True)
         lazy = entry.get("lazy", False)
         args = entry.get("args", {})
+        cache = entry.get("cache", True)
 
         obj = self._load_symbol_from_module(module_path, symbol_name)
 
         resolved_args = self._resolve_args(key, args)
 
-        return ModuleEntry(key=key, obj=obj, call=call, lazy=lazy, args=resolved_args)
+        return ModuleEntry(
+            key=key,
+            obj=obj,
+            call=call,
+            lazy=lazy,
+            args=resolved_args,
+            cache=cache,
+        )
 
     def _resolve_entry(self, key: str, entry: Any) -> Entry:
         if isinstance(entry, str):
