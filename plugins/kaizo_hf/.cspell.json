@@ -1,0 +1,7 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": ["huggingface", "kaizo"],
+  "ignorePaths": [".cspell.json", "ruff.toml"],
+  "flagWords": ["formate"]
+}
