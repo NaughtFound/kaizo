@@ -18,11 +18,11 @@ bad:
   source: thing
 """
 
-invalid_import_type = """
+invalid_import_type_config = """
 import: not_a_dict
 """
 
-missing_import_file = """
+missing_import_file_config = """
 import:
   miss: missing_module.yml
 """
@@ -68,7 +68,7 @@ def test_import_error(tmp_path: Path) -> None:
 
 def test_invalid_import_type(tmp_path: Path) -> None:
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(invalid_import_type)
+    cfg.write_text(invalid_import_type_config)
 
     with pytest.raises(TypeError):
         ConfigParser(cfg)
@@ -76,7 +76,7 @@ def test_invalid_import_type(tmp_path: Path) -> None:
 
 def test_missing_import_file(tmp_path: Path) -> None:
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(missing_import_file)
+    cfg.write_text(missing_import_file_config)
 
     with pytest.raises(FileNotFoundError):
         ConfigParser(cfg)
