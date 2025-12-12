@@ -1,6 +1,4 @@
-import importlib
 import os
-from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -15,6 +13,7 @@ from .utils import (
     FnWithKwargs,
     ListEntry,
     ModuleEntry,
+    ModuleLoader,
     extract_variable,
 )
 
@@ -44,7 +43,7 @@ class ConfigParser:
             if not local_path.is_absolute():
                 local_path = root / local_path
 
-            self.local = self._load_python_module(local_path)
+            self.local = ModuleLoader.load_python_module(local_path)
         else:
             self.local = None
 
@@ -69,21 +68,6 @@ class ConfigParser:
             self.plugins = self._import_plugins(plugins)
         else:
             self.plugins = None
-
-    def _load_python_module(self, path: Path) -> ModuleType:
-        if not path.is_file():
-            msg = f"Local Python file not found: {path}"
-            raise FileNotFoundError(msg)
-
-        module_name = path.stem
-        spec = spec_from_file_location(module_name, path)
-        if spec is None or spec.loader is None:
-            msg = f"Failed to load module from: {path}"
-            raise ImportError(msg)
-
-        module = module_from_spec(spec)
-        spec.loader.exec_module(module)
-        return module
 
     def _import_modules(
         self,
@@ -127,10 +111,10 @@ class ConfigParser:
                     msg = f"source is required for {plugin_name} plugin"
                     raise ValueError(msg)
 
-                plugin = self._load_object(plugin_path, source)
+                plugin = ModuleLoader.load_object(plugin_path, source)
 
             elif isinstance(plugin_module, str):
-                plugin = self._load_object(plugin_path, plugin_module)
+                plugin = ModuleLoader.load_object(plugin_path, plugin_module)
 
             else:
                 msg = f"plugin {plugin_name} is not a valid type"
@@ -145,17 +129,6 @@ class ConfigParser:
             plugin_dict[plugin_name] = obj
 
         return plugin_dict
-
-    def _load_object(self, module_path: str, object_name: str) -> Any:
-        try:
-            module = importlib.import_module(module_path)
-            if not hasattr(module, object_name):
-                msg = f"Module '{module_path}' has no attribute '{object_name}'"
-                raise AttributeError(msg)
-            return getattr(module, object_name)
-        except ModuleNotFoundError as e:
-            msg = f"Could not import module '{module_path}': {e}"
-            raise ImportError(msg) from e
 
     def _load_symbol_from_module(self, module_path: str, symbol_name: str) -> Any:
         if module_path == "local":
@@ -178,7 +151,7 @@ class ConfigParser:
 
             return obj.__call__()
 
-        return self._load_object(module_path, symbol_name)
+        return ModuleLoader.load_object(module_path, symbol_name)
 
     def _resolve_string(self, key: str, entry: str) -> Entry:
         entry_key, entry_value = extract_variable(entry)
