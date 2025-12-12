@@ -14,6 +14,7 @@ from .utils import (
     ListEntry,
     ModuleEntry,
     ModuleLoader,
+    Storage,
     extract_variable,
 )
 
@@ -21,7 +22,7 @@ from .utils import (
 class ConfigParser:
     config: dict[str]
     local: ModuleType | None
-    variables: DictEntry[str]
+    storage: dict[str, Storage]
     kwargs: dict[str]
     modules: dict[str, "ConfigParser"] | None
     plugins: dict[str, FnWithKwargs[Plugin]] | None
@@ -31,7 +32,7 @@ class ConfigParser:
 
         root = Path(root)
 
-        self.variables = DictEntry(resolve=False)
+        self.storage = {}
         self.kwargs = kwargs or {}
 
         with Path.open(config_path) as file:
@@ -153,33 +154,69 @@ class ConfigParser:
 
         return ModuleLoader.load_object(module_path, symbol_name)
 
-    def _resolve_string(self, key: str, entry: str) -> Entry:
-        entry_key, entry_value = extract_variable(entry)
+    def _resolve_from_storage(
+        self,
+        storage: dict[str, Storage],
+        *,
+        key: str,
+        entry_key: str | None,
+        entry_sub_key: str,
+    ) -> Entry | None:
+        storage_key = entry_key
+        storage_key_to_fetch = entry_sub_key
 
         if entry_key is None:
+            storage_key = key
+            storage_key_to_fetch = entry_sub_key
+
+        elif not entry_key:
+            storage_key = entry_sub_key
+            storage_key_to_fetch = None
+
+        storage_i = storage.get(storage_key)
+
+        if storage_i is None:
+            return None
+
+        return storage_i.get(storage_key_to_fetch)
+
+    def _resolve_string(self, key: str, entry: str) -> Entry:
+        entry_module, entry_key, entry_sub_key = extract_variable(entry)
+
+        if entry_module is None:
             return FieldEntry(key=key, value=entry)
 
-        if not entry_key:
-            if entry_value in self.kwargs:
-                return FieldEntry(key=entry_value, value=self.kwargs[entry_value])
+        if not entry_module:
+            if entry_sub_key in self.kwargs:
+                return FieldEntry(key=entry_sub_key, value=self.kwargs[entry_sub_key])
 
-            parsed_entry = self.variables.get(entry_value)
+            parsed_entry = self._resolve_from_storage(
+                self.storage,
+                key=key,
+                entry_key=entry_key,
+                entry_sub_key=entry_sub_key,
+            )
 
         else:
             if self.modules is None:
                 msg = "import module is not given"
                 raise ValueError(msg)
 
-            module = self.modules.get(entry_key)
+            module = self.modules.get(entry_module)
 
             if module is None:
-                msg = f"keyword not found, got {entry_key}"
+                msg = f"keyword not found, got {entry_module}"
                 raise ValueError(msg)
 
-            parsed_entry = module.variables.get(entry_value)
+            parsed_entry = self._resolve_from_storage(
+                module.storage,
+                key=key,
+                entry_key=entry_key,
+                entry_sub_key=entry_sub_key,
+            )
 
         if parsed_entry is None:
-            msg = f"entry not found, got {entry_value}"
+            msg = f"entry not found, got {entry_sub_key}"
             raise KeyError(msg)
 
         return parsed_entry
@@ -191,6 +228,9 @@ class ConfigParser:
         )
 
     def _resolve_args(self, key: str, args: Any) -> DictEntry[str] | ListEntry:
+        if key not in self.storage:
+            self.storage[key] = Storage.init()
+
         if isinstance(args, dict):
             resolved = DictEntry()
             for k, v in args.items():
@@ -201,7 +241,7 @@ class ConfigParser:
                 )
 
                 resolved[k] = value
-                self.variables[k] = value
+                self.storage[key].set(k, value)
 
         if isinstance(args, list):
             resolved = ListEntry()
@@ -254,9 +294,12 @@ class ConfigParser:
         res = DictEntry()
 
         for k in self.config:
+            if k not in self.storage:
+                self.storage[k] = Storage.init()
+
             value = self._resolve_entry(k, self.config[k])
 
             res[k] = value
-            self.variables[k] = value
+            self.storage[k].value = value
 
         return res

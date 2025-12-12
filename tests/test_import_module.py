@@ -11,13 +11,13 @@ x: {X}
 relative_config = """
 import:
   m: module.yml
-run: m.{x}
+run: m.{.x}
 """
 
 absolute_config = """
 import:
   m: {tmp_path}/module.yml
-run: m.{x}
+run: m.{.x}
 """
 
 
@@ -39,7 +39,7 @@ def test_absolute_import_module(tmp_path: Path) -> None:
     module.write_text(module_config)
 
     cfg_file = tmp_path / "cfg.yml"
-    cfg_file.write_text(absolute_config.format(tmp_path=tmp_path, x="{x}"))
+    cfg_file.write_text(absolute_config.replace("{tmp_path}", str(tmp_path)))
 
     parser = ConfigParser(cfg_file)
     out = parser.parse()

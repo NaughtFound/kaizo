@@ -11,18 +11,13 @@ use_args:
   source: sqrt
   call: true
   args:
-    - .{val}
+    - .{.val}
 """
 
 
 def test_args_reference(tmp_path: Path) -> None:
     cfg_file = tmp_path / "cfg.yml"
-    cfg_file.write_text(
-        config.format(
-            VAL=VAL,
-            val="{val}",
-        )
-    )
+    cfg_file.write_text(config.replace("{VAL}", str(VAL)))
 
     parser = ConfigParser(cfg_file)
     out = parser.parse()

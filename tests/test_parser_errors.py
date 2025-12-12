@@ -33,13 +33,13 @@ bad_ref: missing_module.{some_key}
 
 keyword_not_found_config = """
 import:
-  dummy: {tmp_path}/dummy.yml
+  dummy: dummy.yml
 bad_ref: missing_module.{some_key}
 """
 
 entry_not_found_config = """
 import:
-  dummy: {tmp_path}/dummy.yml
+  dummy: dummy.yml
 bad_key: dummy.{not_here}
 """
 
@@ -97,12 +97,7 @@ def test_keyword_not_found(tmp_path: Path) -> None:
     dummy_module.write_text(dummy_config)
 
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(
-        keyword_not_found_config.format(
-            tmp_path=tmp_path,
-            some_key="{some_key}",
-        )
-    )
+    cfg.write_text(keyword_not_found_config)
 
     parser = ConfigParser(cfg)
 
@@ -115,12 +110,7 @@ def test_entry_not_found(tmp_path: Path) -> None:
     dummy_module.write_text(dummy_config)
 
     cfg = tmp_path / "cfg.yml"
-    cfg.write_text(
-        entry_not_found_config.format(
-            tmp_path=tmp_path,
-            not_here="{not_here}",
-        )
-    )
+    cfg.write_text(entry_not_found_config)
 
     parser = ConfigParser(cfg)
 
