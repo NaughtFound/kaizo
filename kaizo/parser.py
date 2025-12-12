@@ -165,13 +165,15 @@ class ConfigParser:
         storage_key = entry_key
         storage_key_to_fetch = entry_sub_key
 
-        if entry_key is None:
-            storage_key = key
-            storage_key_to_fetch = entry_sub_key
-
-        elif not entry_key:
+        if entry_key == "":
             storage_key = entry_sub_key
             storage_key_to_fetch = None
+
+        if entry_sub_key == "":
+            storage_key_to_fetch = None
+
+        if not storage_key:
+            storage_key = key
 
         storage_i = storage.get(storage_key)
 
