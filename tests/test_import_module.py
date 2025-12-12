@@ -11,13 +11,13 @@ x: {X}
 relative_config = """
 import:
   m: module.yml
-run: m.{.x}
+run: m.{x}
 """
 
 absolute_config = """
 import:
   m: {tmp_path}/module.yml
-run: m.{.x}
+run: m.{x}
 """
 
 

@@ -163,13 +163,10 @@ class ConfigParser:
         entry_sub_key: str,
     ) -> Entry | None:
         storage_key = entry_key
-        storage_key_to_fetch = entry_sub_key
+        storage_key_to_fetch = entry_sub_key or None
 
-        if entry_key == "":
+        if storage_key is None:
             storage_key = entry_sub_key
-            storage_key_to_fetch = None
-
-        if entry_sub_key == "":
             storage_key_to_fetch = None
 
         if not storage_key:

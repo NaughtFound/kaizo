@@ -20,9 +20,9 @@ y:
   args:
     x: {X2}
 z: {X3}
-x-ref: .{{.x}}
-y-ref: .{{y.}}
-x-y-ref: .{{y.x}}
+x-ref: .{{x}}
+y-ref: .y.{{}}
+x-y-ref: .y.{{x}}
 """
 
 implicit_config = """
@@ -30,7 +30,7 @@ local: main.py
 import:
  m: main.yml
 x: m.{}
-y: m.{x}
+y: m.y.{}
 z:
   module: local
   source: calc
@@ -42,14 +42,14 @@ explicit_config = """
 local: main.py
 import:
  m: main.yml
-x: m.{.x}
-y: m.{y.}
-y-x: m.{y.x}
+x: m.{x}
+y: m.{y}
+y-x: m.y.{x}
 z:
   module: local
   source: calc
   args:
-    - m.{z.}
+    - m.{z}
 """
 
 
