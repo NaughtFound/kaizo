@@ -3,6 +3,7 @@ from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
 from dataclasses import dataclass, field
 from typing import Any, Generic, SupportsIndex, TypeVar
 
+from .cache import Cacheable
 from .fn import FnWithKwargs
 
 K = TypeVar("K")
@@ -18,7 +19,7 @@ class Entry(ABC):
         pass
 
 
-class DictEntry(MutableMapping, Generic[K]):
+class DictEntry(MutableMapping, Cacheable, Generic[K]):
     _data: dict[K, Entry]
     _resolve: bool
 
@@ -34,6 +35,7 @@ class DictEntry(MutableMapping, Generic[K]):
             raise TypeError(msg)
 
         self._data[key] = value
+        self._update_id()
 
     def __getitem__(self, key: K) -> Any:
         value = self._data[key]
@@ -49,6 +51,7 @@ class DictEntry(MutableMapping, Generic[K]):
 
     def __delitem__(self, key: K) -> None:
         self._data.__delitem__(key)
+        self._update_id()
 
     def __iter__(self) -> Generator[K]:
         yield from self._data
@@ -60,7 +63,7 @@ class DictEntry(MutableMapping, Generic[K]):
         return self._data.__contains__(key)
 
 
-class ListEntry(MutableSequence):
+class ListEntry(MutableSequence, Cacheable):
     _data: list[Entry]
     _resolve: bool
 
@@ -82,6 +85,7 @@ class ListEntry(MutableSequence):
             raise TypeError(msg)
 
         self._data[i] = value
+        self._update_id()
 
     def __getitem__(self, i: SupportsIndex) -> Any:
         value = self._data.__getitem__(i)
@@ -111,6 +115,7 @@ class ListEntry(MutableSequence):
 
     def __delitem__(self, i: SupportsIndex) -> None:
         self._data.__delitem__(i)
+        self._update_id()
 
     def __len__(self) -> int:
         return self._data.__len__()
@@ -121,6 +126,7 @@ class ListEntry(MutableSequence):
             raise TypeError(msg)
 
         self._data.insert(index, value)
+        self._update_id()
 
 
 @dataclass
@@ -139,8 +145,11 @@ class ModuleEntry(Entry):
     args: DictEntry[str] | ListEntry | None = None
     cache: bool = True
     fn: FnWithKwargs = field(init=False)
+    bucket: dict[str] = field(init=False)
 
     def __post_init__(self) -> None:
+        self.bucket = {}
+
         if self.call is False:
             return
 
@@ -157,7 +166,7 @@ class ModuleEntry(Entry):
                 msg = f"'{self.obj}' is not callable"
                 raise TypeError(msg)
 
-            self.fn = FnWithKwargs(fn=self.obj, args=args, kwargs=kwargs, cache=self.cache)
+            self.fn = FnWithKwargs(fn=self.obj, args=args, kwargs=kwargs)
             return
 
         if not hasattr(self.obj, self.call):
@@ -170,7 +179,7 @@ class ModuleEntry(Entry):
             msg = f"'{fn}' is not callable"
             raise TypeError(msg)
 
-        self.fn = FnWithKwargs(fn=fn, args=args, kwargs=kwargs, cache=self.cache)
+        self.fn = FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
 
     def __call__(self) -> Any | FnWithKwargs:
         if self.call is False:
@@ -179,4 +188,15 @@ class ModuleEntry(Entry):
         if self.lazy:
             return self.fn
 
-        return self.fn.__call__()
+        if not self.cache:
+            return self.fn.__call__()
+
+        uid = None
+
+        if self.args is not None:
+            uid = self.args.uid
+
+        if uid not in self.bucket:
+            self.bucket[uid] = self.fn.__call__()
+
+        return self.bucket[uid]
