@@ -22,6 +22,7 @@ Changelog = "https://github.com/NaughtFound/kaizo/blob/main/CHANGELOG.md"
 [project.optional-dependencies]
 hf = ["kaizo-hf"]
 test = ["pytest>=9.0.1"]
+docs = ["Sphinx>=9.0.4", "sphinx-rtd-theme>=3.0.2"]
 
 [build-system]
 requires = ["setuptools >= 80.9.0"]

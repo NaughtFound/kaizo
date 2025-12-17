@@ -11,6 +11,7 @@ on:
       - main
     paths-ignore:
       - "plugins/**"
+      - "docs/**"
 
 jobs:
   build-and-publish:

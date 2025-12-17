@@ -1,7 +1,18 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": ["kaizo"],
-  "ignorePaths": [".cspell.json", "ruff.toml", ".github"],
-  "flagWords": ["formate"]
+  "words": [
+    "kaizo",
+    "toctree"
+  ],
+  "ignorePaths": [
+    ".cspell.json",
+    "ruff.toml",
+    ".github",
+    "*.bat",
+    "Makefile"
+  ],
+  "flagWords": [
+    "formate"
+  ]
 }

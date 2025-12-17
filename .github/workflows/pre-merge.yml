@@ -6,6 +6,7 @@ on:
       - main
     paths-ignore:
       - "plugins/**"
+      - "docs/**"
 
 jobs:
   check-lint-format:
