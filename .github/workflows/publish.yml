@@ -12,6 +12,7 @@ on:
     paths-ignore:
       - "plugins/**"
       - "docs/**"
+      - ".github/**"
 
 jobs:
   build-and-publish:

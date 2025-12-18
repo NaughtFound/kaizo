@@ -38,7 +38,7 @@ jobs:
 
       - name: Build Sphinx docs (Makefile)
         working-directory: docs
-        run: make html
+        run: uv run make html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
