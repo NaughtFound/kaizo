@@ -1,18 +1,14 @@
 {
   "version": "0.2",
   "language": "en",
-  "words": [
-    "kaizo",
-    "toctree"
-  ],
+  "words": ["kaizo", "kwargs", "toctree"],
   "ignorePaths": [
     ".cspell.json",
     "ruff.toml",
     ".github",
     "*.bat",
-    "Makefile"
+    "Makefile",
+    "docs/source/conf.py"
   ],
-  "flagWords": [
-    "formate"
-  ]
+  "flagWords": ["formate"]
 }
