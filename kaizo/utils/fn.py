@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from copy import deepcopy
+from copy import copy
 from typing import Generic, TypeVar
 
 R = TypeVar("R")
@@ -25,7 +25,7 @@ class FnWithKwargs(Generic[R]):
         self.kwargs = kwargs
 
     def __call__(self, *args, **kwargs) -> R:
-        call_kwargs = deepcopy(self.kwargs)
+        call_kwargs = copy(self.kwargs)
         call_kwargs.update(kwargs)
 
         if self.args is not None:
