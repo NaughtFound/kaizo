@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.3.6]
+
+### Fixed
+
+- minor bug related to `FnWithKwargs` fixed
+
 ## [1.3.5]
 
 ### Fixed
