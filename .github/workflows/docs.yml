@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip uv
-          uv sync --extra docs
+          uv sync --group docs
 
       - name: Build Sphinx docs (Makefile)
         working-directory: docs
