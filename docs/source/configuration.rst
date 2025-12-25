@@ -255,7 +255,7 @@ Top-Level Configuration Keys
 ----------------------------
 
 local
------
+~~~~~
 
 The ``local`` key specifies a **local Python file** to load.
 
@@ -283,7 +283,7 @@ Example usage:
 
 
 import
-------
+~~~~~~
 
 The ``import`` key allows importing **other YAML configuration files**.
 
@@ -310,7 +310,7 @@ Referencing imported entries:
 
 
 plugins
--------
+~~~~~~~
 
 The ``plugins`` key registers **plugin dispatchers**.
 

@@ -90,7 +90,17 @@ Python usage:
 Caching and Lazy Execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can control caching and lazy evaluation:
+Kaizo provides fine-grained control over **when** an entry is executed and
+**whether** its result is reused.
+
+Caching
+^^^^^^^
+
+By default, Kaizo **caches execution results** per entry based on the
+resolved argument signature. Disabling caching forces the callable to execute **every time the entry
+is accessed**.
+
+Example:
 
 .. code-block:: yaml
 
@@ -103,13 +113,56 @@ Usage:
 
 .. code-block:: python
 
-   result1 = config["random_value"] # Executes the callable
-   result2 = config["random_value"] # Executes again because cache=False
+   result1 = config["random_value"]  # Executes random()
+   result2 = config["random_value"]  # Executes again because cache=False
 
 .. tip::
 
-   - Use ``cache: false`` to re-run computations each access
-   - Useful for expensive or side-effect operations
+   Use ``cache: false`` when:
+   
+   - The callable has side effects
+   - You need fresh results on every access
+   - The function is non-deterministic (e.g. random values, timestamps)
+
+Lazy Execution
+^^^^^^^^^^^^^^
+
+Setting ``lazy: true`` prevents immediate execution of the entry.
+
+Instead of running the callable, Kaizo returns a **callable wrapper**
+(``FnWithKwargs``) that can be executed later.
+
+Example:
+
+.. code-block:: yaml
+
+   delayed_sleep:
+     module: time
+     source: sleep
+     lazy: true
+     args:
+       - 2
+
+Usage:
+
+.. code-block:: python
+
+   sleeper = config["delayed_sleep"]  # Does NOT sleep yet
+   sleeper()                          # Sleeps for 2 seconds
+
+This is useful for:
+
+- Deferred execution
+- Passing callables as values
+- Building execution pipelines
+- Avoiding work until explicitly needed
+
+.. note::
+
+   When ``lazy: true`` is enabled:
+   
+   - The entry returns a callable instead of a value
+   - Execution only happens when the returned callable is invoked
 
 
 Summary
