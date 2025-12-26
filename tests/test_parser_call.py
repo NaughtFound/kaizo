@@ -52,6 +52,29 @@ fn:
     - {VAL}
 """
 
+correct_import_args_config = f"""
+args:
+ - {VAL}
+fn:
+  module: math
+  source: sqrt
+  args: .{{args}}
+"""
+
+incorrect_import_args_config = """
+fn:
+  module: math
+  source: sqrt
+  args: not_correct
+"""
+
+invalid_args_config = """
+fn:
+  module: math
+  source: sqrt
+  args: 1
+"""
+
 
 def test_false_call(tmp_path: Path) -> None:
     cfg_file = tmp_path / "cfg.yml"
@@ -114,3 +137,35 @@ def test_lazy_call(tmp_path: Path) -> None:
     assert isinstance(entry, FnWithKwargs)
 
     assert entry() == VAL**0.5
+
+
+def test_correct_import_args(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "cfg.yml"
+    cfg_file.write_text(correct_import_args_config)
+
+    parser = ConfigParser(cfg_file)
+    out = parser.parse()
+
+    entry = out["fn"]
+
+    assert entry == VAL**0.5
+
+
+def test_incorrect_import_args(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "cfg.yml"
+    cfg_file.write_text(incorrect_import_args_config)
+
+    parser = ConfigParser(cfg_file)
+
+    with pytest.raises(TypeError, match=r"args must be `ListEntry` or `DictEntry`, got *"):
+        parser.parse()
+
+
+def test_invalid_args_type(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "cfg.yml"
+    cfg_file.write_text(invalid_args_config)
+
+    parser = ConfigParser(cfg_file)
+
+    with pytest.raises(TypeError, match=r"invalid type for args, got *"):
+        parser.parse()

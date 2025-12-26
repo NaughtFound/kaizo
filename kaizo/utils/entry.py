@@ -1,7 +1,8 @@
+import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, SupportsIndex, TypeVar
+from typing import Any, Generic, Self, SupportsIndex, TypeVar
 
 from .cache import Cacheable
 from .fn import FnWithKwargs
@@ -28,6 +29,25 @@ class DictEntry(MutableMapping, Cacheable, Generic[K]):
 
         self._data = data or {}
         self._resolve = resolve
+
+    @staticmethod
+    def from_raw(
+        root_key: str | None = None,
+        raw_data: dict[K, Any] | None = None,
+        *,
+        resolve: bool = True,
+    ) -> Self:
+        if root_key is None:
+            root_key = uuid.uuid4().hex
+
+        if raw_data is None:
+            raw_data = {}
+
+        data = {
+            key: FieldEntry(key=root_key, value=value) for key, value in raw_data.items()
+        }
+
+        return DictEntry(data=data, resolve=resolve)
 
     def __setitem__(self, key: K, value: Any) -> None:
         if not isinstance(value, Entry):
@@ -72,6 +92,23 @@ class ListEntry(MutableSequence, Cacheable):
 
         self._data = data or []
         self._resolve = resolve
+
+    @staticmethod
+    def from_raw(
+        root_key: str | None = None,
+        raw_data: list[Any] | None = None,
+        *,
+        resolve: bool = True,
+    ) -> Self:
+        if root_key is None:
+            root_key = uuid.uuid4().hex
+
+        if raw_data is None:
+            raw_data = []
+
+        data = [FieldEntry(key=root_key, value=value) for value in raw_data]
+
+        return ListEntry(data=data, resolve=resolve)
 
     def __setitem__(self, i: SupportsIndex, value: Any) -> None:
         if isinstance(value, Iterable):
