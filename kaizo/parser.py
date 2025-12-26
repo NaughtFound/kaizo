@@ -23,7 +23,7 @@ class ConfigParser:
     config: dict[str]
     local: ModuleType | None
     storage: dict[str, Storage]
-    kwargs: dict[str]
+    kwargs: DictEntry[str]
     modules: dict[str, "ConfigParser"] | None
     plugins: dict[str, FnWithKwargs[Plugin]] | None
 
@@ -33,7 +33,7 @@ class ConfigParser:
         root = Path(root)
 
         self.storage = {}
-        self.kwargs = kwargs or {}
+        self.kwargs = DictEntry.from_raw(raw_data=kwargs, resolve=False)
 
         with Path.open(config_path) as file:
             self.config = yaml.safe_load(file)
@@ -187,7 +187,7 @@ class ConfigParser:
 
         if not entry_module:
             if entry_sub_key in self.kwargs:
-                return FieldEntry(key=entry_sub_key, value=self.kwargs[entry_sub_key])
+                return self.kwargs[entry_sub_key]
 
             parsed_entry = self._resolve_from_storage(
                 self.storage,
@@ -227,17 +227,15 @@ class ConfigParser:
         )
 
     def _resolve_args(self, key: str, args: Any) -> DictEntry[str] | ListEntry:
+        resolved = None
+
         if key not in self.storage:
             self.storage[key] = Storage.init()
 
         if isinstance(args, dict):
             resolved = DictEntry()
             for k, v in args.items():
-                value = (
-                    FieldEntry(key=key, value=self.kwargs[k])
-                    if k in self.kwargs
-                    else self._resolve_entry(key, v)
-                )
+                value = self._resolve_entry(key, v)
 
                 resolved[k] = value
                 self.storage[key].set(k, value)
@@ -246,6 +244,21 @@ class ConfigParser:
             resolved = ListEntry()
             for v in args:
                 resolved.append(self._resolve_entry(key, v))
+
+        if isinstance(args, str):
+            resolved = self._resolve_string(key=key, entry=args)
+
+            value = resolved.__call__()
+
+            if not isinstance(value, DictEntry) and not isinstance(value, ListEntry):
+                msg = f"args must be `ListEntry` or `DictEntry`, got {type(value)}"
+                raise TypeError(msg)
+
+            resolved = value
+
+        if resolved is None:
+            msg = f"invalid type for args, got {type(args)}"
+            raise TypeError(msg)
 
         return resolved
 
@@ -278,6 +291,9 @@ class ConfigParser:
         )
 
     def _resolve_entry(self, key: str, entry: Any) -> Entry:
+        if key in self.kwargs:
+            return self.kwargs[key]
+
         if isinstance(entry, str):
             return self._resolve_string(key, entry)
 

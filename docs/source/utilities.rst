@@ -3,7 +3,7 @@ Utilities
 
 Kaizo provides several utility classes that manage execution,
 resolution, and storage of configuration entries. These utilities form
-the backbone of the parser’s behavior.
+the backbone of the parser's behavior.
 
 
 Entry System
@@ -123,7 +123,7 @@ Example:
 
    args = ListEntry([FieldEntry("a", 10), FieldEntry("b", 20)])
    entry = ModuleEntry(key="sum", obj=add, call=True, lazy=False, args=args)
-   print(entry())  # Outputs: 3
+   print(entry())  # Outputs: 30
 
 .. important::
 

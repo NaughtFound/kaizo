@@ -68,12 +68,12 @@ During parsing, Kaizo performs the following steps for each plugin:
 1. Imports ``kaizo.plugins.<plugin_name>``
 2. Loads the plugin class specified by ``source``
 3. Resolves plugin arguments
-4. Wraps the plugin’s ``dispatch`` method using ``FnWithKwargs``
+4. Wraps the plugin's ``dispatch`` method using ``FnWithKwargs``
 5. Stores the wrapped callable for later use
 
 .. important::
 
-   The plugin’s ``dispatch`` method is **not called during parsing**.
+   The plugin's ``dispatch`` method is **not called during parsing**.
    It is only wrapped and prepared for execution.
 
 

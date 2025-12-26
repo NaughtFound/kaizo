@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.4.0]
+
+### Added
+
+- `_resolve_args` now supports string
+- error handling added to `_resolve_args`
+- `from_raw` added to `DictEntry` and `ListEntry`
+
+### Changed
+
+- kwargs moved to `_resolve_entry`
+- kwargs uses `DictEntry`
+
 ## [1.3.6]
 
 ### Fixed
