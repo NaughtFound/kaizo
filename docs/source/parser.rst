@@ -142,7 +142,7 @@ Resolution includes:
 6. Execute or Cache Results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Execution occurs when an entry’s ``__call__`` method is invoked.
+Execution occurs when an entry's ``__call__`` method is invoked.
 
 Depending on entry settings, results may be:
 

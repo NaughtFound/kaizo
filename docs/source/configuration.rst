@@ -118,22 +118,18 @@ Example:
 args
 ~~~~
 
-The ``args`` field defines the arguments passed to the callable.
+The ``args`` field defines the arguments passed to the resolved callable.
 
-It may be either a **dictionary** (keyword arguments) or a **list**
-(positional arguments).
+It supports **three forms**:
 
-Dictionary arguments:
+- A **list** → positional arguments
+- A **dict** → named argument mapping
+- A **string reference** → resolved dynamically into a list or dict
 
-.. code-block:: yaml
+List Arguments
+^^^^^^^^^^^^^^
 
-   greet:
-     module: builtins
-     source: print
-     args:
-       sep: " - "
-
-List arguments:
+A list is resolved element-by-element and passed as positional arguments.
 
 .. code-block:: yaml
 
@@ -144,10 +140,58 @@ List arguments:
        - "Hello"
        - "World"
 
-.. tip::
+Each value in the list is fully resolvable and may reference other
+entries or runtime values.
 
-   Arguments are fully resolvable and may reference other entries,
-   imported modules, or runtime keyword arguments.
+Dictionary Arguments
+^^^^^^^^^^^^^^^^^^^^
+
+A dictionary is resolved key-by-key into a ``DictEntry`` and passed
+as a mapping.
+
+.. code-block:: yaml
+
+   greet:
+     module: builtins
+     source: print
+     args:
+       sep: " - "
+
+Each key-value pair is stored in local entry storage and can be
+referenced by other entries.
+
+String Resolution
+^^^^^^^^^^^^^^^^^
+
+If ``args`` is a **string**, it is treated as a reference and resolved
+at runtime.
+
+The resolved value **must evaluate to a list or dictionary**.
+Otherwise, an error is raised.
+
+Example:
+
+.. code-block:: yaml
+
+   shared_args:
+       - "Hello"
+       - "Kaizo"
+
+   greet:
+     module: builtins
+     source: print
+     args: .{shared_args}
+
+At runtime, the string reference is **resolved** and **executed**.
+If the result is not a ``ListEntry`` or ``DictEntry``, parsing fails.
+
+.. warning::
+
+   When using string-based ``args``:
+   
+   - The resolved value **must** be a ``ListEntry`` or ``DictEntry``
+   - Scalar values are not allowed
+   - Resolution happens before execution
 
 
 call
@@ -344,7 +388,7 @@ Plugins are invoked using:
 
 .. important::
 
-   Plugin execution is routed through the plugin’s ``dispatch`` method
+   Plugin execution is routed through the plugin's ``dispatch`` method
    with resolved metadata.
 
 
