@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [1.5.0]
+
+- exception handling added to `ModuleEntry`
+
 ## [1.4.0]
 
 ### Added
