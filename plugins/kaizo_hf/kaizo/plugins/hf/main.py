@@ -1,4 +1,5 @@
 from asyncio import Future
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
 
@@ -30,12 +31,12 @@ class HFPlugin(Plugin):
         repo_path: str,
         *,
         run_as_future: bool = True,
-        commit: HFCommit | dict[str] | None = None,
+        commit: HFCommit | Mapping[str] | None = None,
     ) -> Future[CommitInfo] | CommitInfo:
         if commit is None:
             commit = HFCommit()
 
-        if isinstance(commit, dict):
+        if isinstance(commit, Mapping):
             commit = HFCommit(**commit)
 
         return self.api.upload_file(
@@ -55,12 +56,12 @@ class HFPlugin(Plugin):
         repo_path: str,
         *,
         run_as_future: bool = True,
-        commit: HFCommit | dict[str] | None = None,
+        commit: HFCommit | Mapping[str] | None = None,
     ) -> Future[CommitInfo] | CommitInfo:
         if commit is None:
             commit = HFCommit()
 
-        if isinstance(commit, dict):
+        if isinstance(commit, Mapping):
             commit = HFCommit(**commit)
 
         return self.api.upload_folder(
@@ -77,7 +78,7 @@ class HFPlugin(Plugin):
     def download_file(
         self,
         file_name: str,
-        file_dir: HFDir | dict[str] | None = None,
+        file_dir: HFDir | Mapping[str] | None = None,
         *,
         force_download: bool = False,
         local_files_only: bool = False,
@@ -85,7 +86,7 @@ class HFPlugin(Plugin):
         if file_dir is None:
             file_dir = HFDir()
 
-        if isinstance(file_dir, dict):
+        if isinstance(file_dir, Mapping):
             file_dir = HFDir(**file_dir)
 
         res = self.api.hf_hub_download(
@@ -104,8 +105,8 @@ class HFPlugin(Plugin):
 
     def snapshot_download(
         self,
-        folder_dir: HFDir | dict[str] | None = None,
-        patterns: HFPatterns | dict[str] | None = None,
+        folder_dir: HFDir | Mapping[str] | None = None,
+        patterns: HFPatterns | Mapping[str] | None = None,
         max_workers: int = 8,
         *,
         force_download: bool = False,
@@ -114,13 +115,13 @@ class HFPlugin(Plugin):
         if folder_dir is None:
             folder_dir = HFDir()
 
-        if isinstance(folder_dir, dict):
+        if isinstance(folder_dir, Mapping):
             folder_dir = HFDir(**folder_dir)
 
         if patterns is None:
             patterns = HFPatterns()
 
-        if isinstance(patterns, dict):
+        if isinstance(patterns, Mapping):
             patterns = HFPatterns(**patterns)
 
         res = self.api.snapshot_download(
