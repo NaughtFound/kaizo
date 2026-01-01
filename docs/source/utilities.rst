@@ -204,3 +204,90 @@ Example:
 
    Storage allows Kaizo to resolve references across modules, plugins,
    and runtime keyword arguments consistently.
+
+
+Exception Handling
+------------------
+
+Kaizo provides a configurable exception handling mechanism that controls
+how errors are treated during entry execution.
+
+This behavior is implemented through ``ExceptionPolicy`` and
+``ExceptionHandler`` and is primarily used by ``ModuleEntry``.
+
+ExceptionPolicy
+~~~~~~~~~~~~~~~
+
+``ExceptionPolicy`` defines how exceptions raised during execution
+should be handled.
+
+Supported policies:
+
+- ``RAISE`` *(default)*  
+  Propagates the exception normally.
+
+- ``IGNORE``  
+  Suppresses matching exceptions and returns ``None``.
+
+ExceptionHandler
+~~~~~~~~~~~~~~~~
+
+``ExceptionHandler`` is a context manager that applies the selected
+exception policy during execution.
+
+Internally, it wraps callable execution and decides whether to
+suppress or propagate exceptions based on the configured policy.
+
+Key characteristics:
+
+- Applies only to specified exception types
+- Defaults to handling ``Exception``
+- Uses standard ``with`` context semantics
+
+Simplified usage:
+
+.. code-block:: python
+
+   from kaizo.utils import ExceptionHandler, ExceptionPolicy
+
+   with ExceptionHandler(policy=ExceptionPolicy.IGNORE):
+       risky_function()
+
+
+Integration with ModuleEntry
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Each ``ModuleEntry`` creates its own ``ExceptionHandler`` instance
+based on the configured ``policy``.
+
+During execution:
+
+- The callable is invoked inside the exception handler
+- If an exception occurs:
+  - ``RAISE`` propagates the error
+  - ``IGNORE`` suppresses it and returns ``None``
+
+.. note::
+
+   Exception handling occurs **at execution time**, not during parsing.
+
+
+Configuration Example
+~~~~~~~~~~~~~~~~~~~~~
+
+Exception handling can be configured directly in YAML:
+
+.. code-block:: yaml
+
+   safe_task:
+     module: unstable.module
+     source: risky_function
+     policy: ignore
+
+In this example, any raised exception during execution is suppressed,
+allowing the configuration to continue executing without failure.
+
+.. important::
+
+   Exception handling does **not** prevent argument resolution or
+   callable preparation errors. It only applies to runtime execution.

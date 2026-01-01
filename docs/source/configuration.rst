@@ -174,8 +174,8 @@ Example:
 .. code-block:: yaml
 
    shared_args:
-       - "Hello"
-       - "Kaizo"
+     - "Hello"
+     - "Kaizo"
 
    greet:
      module: builtins
@@ -291,8 +291,36 @@ Example:
 
 .. important::
 
-   Caching is implemented internally using a per-entry bucket keyed by
-   resolved argument signatures.
+   Caching is implemented using a per-entry bucket keyed by
+   resolved argument identity.
+
+
+policy
+~~~~~~
+
+The ``policy`` field controls **exception handling behavior** during execution.
+
+Supported values:
+
+- ``raise`` *(default)*  
+  Exceptions propagate normally.
+
+- ``ignore``  
+  Exceptions are suppressed.
+
+Example:
+
+.. code-block:: yaml
+
+   safe_call:
+     module: risky.module
+     source: unstable_fn
+     policy: ignore
+
+.. note::
+
+   Internally, execution is wrapped in an ``ExceptionHandler`` context
+   manager that applies the selected policy.
 
 
 Top-Level Configuration Keys
