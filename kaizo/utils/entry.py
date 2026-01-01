@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, Generic, Self, SupportsIndex, TypeVar
 
 from .cache import Cacheable
+from .exception import ExceptionHandler, ExceptionPolicy
 from .fn import FnWithKwargs
 
 K = TypeVar("K")
@@ -181,11 +182,14 @@ class ModuleEntry(Entry):
     lazy: bool
     args: DictEntry[str] | ListEntry | None = None
     cache: bool = True
+    policy: ExceptionPolicy = ExceptionPolicy.RAISE
     fn: FnWithKwargs = field(init=False)
     bucket: dict[str] = field(init=False)
+    exception_handler: ExceptionHandler = field(init=False)
 
     def __post_init__(self) -> None:
         self.bucket = {}
+        self.exception_handler = ExceptionHandler(policy=self.policy)
 
         if self.call is False:
             return
@@ -218,6 +222,10 @@ class ModuleEntry(Entry):
 
         self.fn = FnWithKwargs(fn=fn, args=args, kwargs=kwargs)
 
+    def _call_fn(self) -> Any:
+        with self.exception_handler:
+            return self.fn.__call__()
+
     def __call__(self) -> Any | FnWithKwargs:
         if self.call is False:
             return self.obj
@@ -226,7 +234,7 @@ class ModuleEntry(Entry):
             return self.fn
 
         if not self.cache:
-            return self.fn.__call__()
+            return self._call_fn()
 
         uid = None
 
@@ -234,6 +242,6 @@ class ModuleEntry(Entry):
             uid = self.args.uid
 
         if uid not in self.bucket:
-            self.bucket[uid] = self.fn.__call__()
+            self.bucket[uid] = self._call_fn()
 
         return self.bucket[uid]

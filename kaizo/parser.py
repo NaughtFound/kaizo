@@ -276,6 +276,7 @@ class ConfigParser:
         lazy = entry.get("lazy", False)
         args = entry.get("args", {})
         cache = entry.get("cache", True)
+        policy = entry.get("policy")
 
         obj = self._load_symbol_from_module(module_path, symbol_name)
 
@@ -288,6 +289,7 @@ class ConfigParser:
             lazy=lazy,
             args=resolved_args,
             cache=cache,
+            policy=policy,
         )
 
     def _resolve_entry(self, key: str, entry: Any) -> Entry:
