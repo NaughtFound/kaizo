@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Self
 
 import yaml
 
@@ -24,10 +24,18 @@ class ConfigParser:
     local: ModuleType | None
     storage: dict[str, Storage]
     kwargs: DictEntry[str]
-    modules: dict[str, "ConfigParser"] | None
+    local_modules: dict[str, Self] | None
+    shared_modules: dict[str, Self] = {}
     plugins: dict[str, FnWithKwargs[Plugin]] | None
+    isolated: bool
 
-    def __init__(self, config_path: str | Path, kwargs: dict[str] | None = None) -> None:
+    def __init__(
+        self,
+        config_path: str | Path,
+        kwargs: dict[str] | None = None,
+        *,
+        isolated: bool = True,
+    ) -> None:
         root, _ = os.path.split(config_path)
 
         root = Path(root)
@@ -37,6 +45,8 @@ class ConfigParser:
 
         with Path.open(config_path) as file:
             self.config = yaml.safe_load(file)
+
+        self.isolated = self.config.pop("isolated", isolated)
 
         if "local" in self.config:
             local_path = Path(self.config.pop("local"))
@@ -55,9 +65,23 @@ class ConfigParser:
                 msg = f"import module should be a dict, got {type(modules)}"
                 raise TypeError(msg)
 
-            self.modules = self._import_modules(root, modules, kwargs)
+            imported_modules = self._import_modules(
+                root,
+                modules,
+                kwargs,
+                isolated=isolated,
+            )
+
+            self.local_modules = {}
+
+            for key, value in imported_modules.items():
+                if value.isolated:
+                    self.local_modules[key] = value
+                elif key not in ConfigParser.shared_modules:
+                    ConfigParser.shared_modules[key] = value
+
         else:
-            self.modules = None
+            self.local_modules = None
 
         if "plugins" in self.config:
             plugins = self.config.pop("plugins")
@@ -75,7 +99,9 @@ class ConfigParser:
         root: Path,
         modules: dict[str, str],
         kwargs: dict[str] | None = None,
-    ) -> dict[str, "ConfigParser"]:
+        *,
+        isolated: bool = True,
+    ) -> dict[str, Self]:
         module_dict = {}
 
         for module_name, module_path_str in modules.items():
@@ -84,7 +110,7 @@ class ConfigParser:
             if not module_path.is_absolute():
                 module_path = root / module_path
 
-            parser = ConfigParser(module_path, kwargs)
+            parser = ConfigParser(module_path, kwargs, isolated=isolated)
             parser.parse()
 
             module_dict[module_name] = parser
@@ -154,9 +180,24 @@ class ConfigParser:
 
         return ModuleLoader.load_object(module_path, symbol_name)
 
+    def _resolve_parser(self, key: str) -> Self:
+        if self.local_modules is None:
+            msg = "import module is not given"
+            raise ValueError(msg)
+
+        module = self.local_modules.get(key)
+
+        if module is None:
+            module = ConfigParser.shared_modules.get(key)
+
+        if module is None:
+            msg = f"keyword not found, got {key}"
+            raise ValueError(msg)
+
+        return module
+
     def _resolve_from_storage(
         self,
-        storage: dict[str, Storage],
         *,
         key: str,
         entry_key: str | None,
@@ -172,7 +213,7 @@ class ConfigParser:
         if not storage_key:
             storage_key = key
 
-        storage_i = storage.get(storage_key)
+        storage_i = self.storage.get(storage_key)
 
         if storage_i is None:
             return None
@@ -190,25 +231,15 @@ class ConfigParser:
                 return self.kwargs[entry_sub_key]
 
             parsed_entry = self._resolve_from_storage(
-                self.storage,
                 key=key,
                 entry_key=entry_key,
                 entry_sub_key=entry_sub_key,
             )
 
         else:
-            if self.modules is None:
-                msg = "import module is not given"
-                raise ValueError(msg)
+            parser = self._resolve_parser(entry_module)
 
-            module = self.modules.get(entry_module)
-
-            if module is None:
-                msg = f"keyword not found, got {entry_module}"
-                raise ValueError(msg)
-
-            parsed_entry = self._resolve_from_storage(
-                module.storage,
+            parsed_entry = parser._resolve_from_storage(
                 key=key,
                 entry_key=entry_key,
                 entry_sub_key=entry_sub_key,
