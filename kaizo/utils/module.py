@@ -1,4 +1,5 @@
 import importlib
+import sys
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from types import ModuleType
@@ -11,6 +12,10 @@ class ModuleLoader:
         if not path.is_file():
             msg = f"Local Python file not found: {path}"
             raise FileNotFoundError(msg)
+
+        module_dir = str(path.parent)
+        if module_dir not in sys.path:
+            sys.path.insert(0, module_dir)
 
         module_name = path.stem
         spec = spec_from_file_location(module_name, path)
