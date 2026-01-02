@@ -1,6 +1,6 @@
 [project]
 name = "kaizo"
-version = "1.5.1"
+version = "1.5.2"
 description = "declarative YAML-based configuration parser"
 authors = [{ name = "Mohammad Ghazanfari", email = "mgh.5225@gmail.com" }]
 readme = "README.md"

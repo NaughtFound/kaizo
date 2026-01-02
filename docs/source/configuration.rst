@@ -326,6 +326,17 @@ Example:
 Top-Level Configuration Keys
 ----------------------------
 
+isolated
+~~~~~~~~
+
+The ``isolated`` key controls how this configuration module is registered when imported.
+
+- ``true`` *(default)* → The module is added as a **local module** for the importing parser only.  
+  Other parsers that import this module will have it in their **local_modules**.
+
+- ``false`` → The module is added to **shared_modules** if not already present.  
+  Shared modules are globally accessible and can be reused by multiple parsers.
+
 local
 ~~~~~
 

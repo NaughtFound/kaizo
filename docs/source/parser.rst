@@ -28,7 +28,9 @@ Initialization
 
    ConfigParser(
        config_path: str | Path,
-       kwargs: dict | None = None
+       kwargs: dict | None = None,
+       *,
+       isolated: bool = True,
    )
 
 Parameters:
@@ -39,6 +41,17 @@ Parameters:
 - ``kwargs``  
   Optional runtime keyword arguments.  
   These values take precedence during resolution.
+
+- ``isolated`` *(default: True)*  
+  Controls how this parser is registered in Kaizo's module system.  
+
+  - If ``true`` *(default)*  
+    The module is added as a **local module** for any parser that imports it.  
+    This means it is only accessible to the parser that imported it.
+
+  - If ``false``  
+    The module is added to **shared_modules** if it isn't already present.  
+    Shared modules are globally accessible to all parsers, allowing cross-file references and preventing duplication.
 
 .. note::
 
