@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from copy import copy
+from functools import partial
 from typing import Generic, TypeVar
 
 R = TypeVar("R")
@@ -7,8 +7,8 @@ R = TypeVar("R")
 
 class FnWithKwargs(Generic[R]):
     fn: Callable[..., R]
-    args: tuple | None
-    kwargs: dict[str] | None
+    args: tuple
+    kwargs: dict[str]
 
     def __init__(
         self,
@@ -16,22 +16,20 @@ class FnWithKwargs(Generic[R]):
         args: tuple | None = None,
         kwargs: dict[str] | None = None,
     ) -> None:
-        self.fn = fn
+        if args is None:
+            args = ()
 
         if kwargs is None:
             kwargs = {}
 
+        self.fn = fn
         self.args = args
         self.kwargs = kwargs
 
     def __call__(self, *args, **kwargs) -> R:
-        call_kwargs = copy(self.kwargs)
-        call_kwargs.update(kwargs)
+        fn = partial(self.fn, *self.args, **self.kwargs)
 
-        if self.args is not None:
-            args = self.args
-
-        return self.fn(*args, **call_kwargs)
+        return fn(*args, **kwargs)
 
     def update(self, **kwargs) -> None:
         self.kwargs.update(kwargs)
