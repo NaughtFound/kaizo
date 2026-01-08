@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -37,14 +36,14 @@ class ConfigParser:
         *,
         isolated: bool = True,
     ) -> None:
-        root, _ = os.path.split(config_path)
+        config_path = Path(config_path)
 
-        root = Path(root)
+        root = config_path.parent
 
         self.storage = {}
         self.kwargs = DictEntry.from_raw(raw_data=kwargs, resolve=False)
 
-        with Path.open(config_path) as file:
+        with config_path.open() as file:
             self.config = yaml.safe_load(file)
 
         self.isolated = self.config.pop("isolated", isolated)
