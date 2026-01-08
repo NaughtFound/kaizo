@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Self
+from typing import Any
 
 import yaml
+from typing_extensions import Self
 
 from .plugins import Plugin, PluginMetadata
 from .utils import (

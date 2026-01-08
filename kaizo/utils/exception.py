@@ -1,8 +1,10 @@
 from collections.abc import Callable, Iterable
 from contextlib import AbstractContextManager
-from enum import StrEnum
 from types import TracebackType
-from typing import Self
+
+from typing_extensions import Self
+
+from .common import StrEnum
 
 
 class ExceptionPolicy(StrEnum):
