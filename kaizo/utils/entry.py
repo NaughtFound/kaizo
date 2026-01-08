@@ -2,7 +2,9 @@ import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, Self, SupportsIndex, TypeVar
+from typing import Any, Generic, SupportsIndex, TypeVar
+
+from typing_extensions import Self
 
 from .cache import Cacheable
 from .exception import ExceptionHandler, ExceptionPolicy

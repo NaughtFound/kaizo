@@ -1,4 +1,10 @@
 import re
+from enum import Enum
+
+
+class StrEnum(str, Enum):
+    def __str__(self) -> str:
+        return self.value
 
 
 def extract_variable(entry: str) -> tuple[str | None, str | None, str]:
