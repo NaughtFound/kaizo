@@ -1,11 +1,8 @@
 from collections.abc import Callable
 from functools import partial
-from typing import Generic, TypeVar
-
-R = TypeVar("R")
 
 
-class FnWithKwargs(Generic[R]):
+class FnWithKwargs[R]:
     fn: Callable[..., R]
     args: tuple
     kwargs: dict[str]

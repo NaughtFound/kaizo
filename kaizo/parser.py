@@ -1,9 +1,8 @@
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, ClassVar, Self
 
 import yaml
-from typing_extensions import Self
 
 from .plugins import Plugin, PluginMetadata
 from .utils import (
@@ -25,7 +24,7 @@ class ConfigParser:
     storage: dict[str, Storage]
     kwargs: DictEntry[str]
     local_modules: dict[str, Self] | None
-    shared_modules: dict[str, Self] = {}
+    shared_modules: ClassVar[dict[str, Self]] = {}
     plugins: dict[str, FnWithKwargs[Plugin]] | None
     isolated: bool
 

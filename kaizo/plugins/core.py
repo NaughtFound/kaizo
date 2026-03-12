@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-
-from typing_extensions import Self
+from typing import Self
 
 from kaizo.utils.entry import DictEntry, ListEntry
 

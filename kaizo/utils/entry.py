@@ -2,16 +2,11 @@ import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, SupportsIndex, TypeVar
-
-from typing_extensions import Self
+from typing import Any, Self, SupportsIndex
 
 from .cache import Cacheable
 from .exception import ExceptionHandler, ExceptionPolicy
 from .fn import FnWithKwargs
-
-K = TypeVar("K")
-V = TypeVar("V")
 
 
 @dataclass
@@ -23,7 +18,7 @@ class Entry(ABC):
         pass
 
 
-class DictEntry(MutableMapping, Cacheable, Generic[K]):
+class DictEntry[K](MutableMapping, Cacheable):
     _data: dict[K, Entry]
     _resolve: bool
 
@@ -170,7 +165,7 @@ class ListEntry(MutableSequence, Cacheable):
 
 
 @dataclass
-class FieldEntry(Entry, Generic[V]):
+class FieldEntry[V](Entry):
     value: V
 
     def __call__(self) -> V:
