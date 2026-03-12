@@ -42,7 +42,7 @@ Requirements
 
 Kaizo requires:
 
-- **Python 3.10** or higher
+- **Python 3.12** or higher
 - **PyYAML** (for parsing YAML configuration files)
 
 .. warning::
