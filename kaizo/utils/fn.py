@@ -1,17 +1,18 @@
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping, Sequence
 from functools import partial
+from typing import Any
 
 
 class FnWithKwargs[R]:
     fn: Callable[..., R]
-    args: tuple
-    kwargs: dict[str]
+    args: Sequence[Any]
+    kwargs: MutableMapping[str, Any]
 
     def __init__(
         self,
         fn: Callable[..., R],
-        args: tuple | None = None,
-        kwargs: dict[str] | None = None,
+        args: Sequence[Any] | None = None,
+        kwargs: MutableMapping[str, Any] | None = None,
     ) -> None:
         if args is None:
             args = ()

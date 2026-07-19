@@ -12,7 +12,7 @@ class ExceptionPolicy(StrEnum):
 
 class ExceptionHandler(AbstractContextManager):
     _policy: ExceptionPolicy
-    _exc_types: tuple[type[BaseException]]
+    _exc_types: tuple[type[BaseException], ...]
     _exc_handler: Callable[[], bool]
 
     def __init__(
@@ -22,7 +22,7 @@ class ExceptionHandler(AbstractContextManager):
     ) -> None:
         self._policy = policy
         self._exc_types = tuple(exc_types)
-        self._exc_handler = None
+        self._exc_handler = self._raise
 
     def __enter__(self) -> Self:
         match self._policy:

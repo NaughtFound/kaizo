@@ -6,4 +6,4 @@ def extract_variable(entry: str) -> tuple[str | None, str | None, str]:
     if matched is None:
         return None, None, entry
 
-    return matched.groups()
+    return matched.groups()  # pyright: ignore[reportReturnType]
