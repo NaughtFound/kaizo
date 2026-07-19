@@ -2,7 +2,7 @@ import uuid
 from abc import ABC, abstractmethod
 from collections.abc import Generator, Iterable, MutableMapping, MutableSequence
 from dataclasses import dataclass, field
-from typing import Any, Self, SupportsIndex
+from typing import Any, SupportsIndex
 
 from .cache import Cacheable
 from .exception import ExceptionHandler, ExceptionPolicy
@@ -34,14 +34,14 @@ class DictEntry[K](MutableMapping, Cacheable):
         raw_data: dict[K, Any] | None = None,
         *,
         resolve: bool = True,
-    ) -> Self:
+    ) -> "DictEntry":
         if root_key is None:
             root_key = uuid.uuid4().hex
 
         if raw_data is None:
             raw_data = {}
 
-        data = {
+        data: dict[K, Entry] = {
             key: FieldEntry(key=root_key, value=value) for key, value in raw_data.items()
         }
 
@@ -77,7 +77,7 @@ class DictEntry[K](MutableMapping, Cacheable):
     def __len__(self) -> int:
         return self._data.__len__()
 
-    def __contains__(self, key: K) -> bool:
+    def __contains__(self, key: Any) -> bool:
         return self._data.__contains__(key)
 
 
@@ -97,32 +97,40 @@ class ListEntry(MutableSequence, Cacheable):
         raw_data: list[Any] | None = None,
         *,
         resolve: bool = True,
-    ) -> Self:
+    ) -> "ListEntry":
         if root_key is None:
             root_key = uuid.uuid4().hex
 
         if raw_data is None:
             raw_data = []
 
-        data = [FieldEntry(key=root_key, value=value) for value in raw_data]
+        data: list[Entry] = [FieldEntry(key=root_key, value=value) for value in raw_data]
 
         return ListEntry(data=data, resolve=resolve)
 
-    def __setitem__(self, i: SupportsIndex, value: Any) -> None:
-        if isinstance(value, Iterable):
-            for value_i in value:
+    def __setitem__(self, i: SupportsIndex | slice, value: Any) -> None:
+        if isinstance(i, slice):
+            if not isinstance(value, Iterable):
+                msg = f"Value for slice assignment must be an Iterable, got {type(value)}"
+                raise TypeError(msg)
+
+            value_list = list(value)
+            for value_i in value_list:
                 if not isinstance(value_i, Entry):
                     msg = f"Value must be an Entry instance, got {type(value_i)}"
                     raise TypeError(msg)
 
-        elif not isinstance(value, Entry):
-            msg = f"Value must be an Entry instance, got {type(value)}"
-            raise TypeError(msg)
+            self._data[i] = value_list
+        else:
+            if not isinstance(value, Entry):
+                msg = f"Value must be an Entry instance, got {type(value)}"
+                raise TypeError(msg)
 
-        self._data[i] = value
+            self._data[i] = value
+
         self._update_id()
 
-    def __getitem__(self, i: SupportsIndex) -> Any:
+    def __getitem__(self, i: SupportsIndex | slice) -> Any:
         value = self._data.__getitem__(i)
 
         if isinstance(value, Iterable):
@@ -148,7 +156,7 @@ class ListEntry(MutableSequence, Cacheable):
         msg = f"Value must be an Entry instance, got {type(value)}"
         raise TypeError(msg)
 
-    def __delitem__(self, i: SupportsIndex) -> None:
+    def __delitem__(self, i: SupportsIndex | slice) -> None:
         self._data.__delitem__(i)
         self._update_id()
 
@@ -181,7 +189,7 @@ class ModuleEntry(Entry):
     cache: bool = True
     policy: ExceptionPolicy = ExceptionPolicy.RAISE
     fn: FnWithKwargs = field(init=False)
-    bucket: dict[str] = field(init=False)
+    bucket: dict[str, Any] = field(init=False)
     exception_handler: ExceptionHandler = field(init=False)
 
     def __post_init__(self) -> None:
@@ -233,7 +241,7 @@ class ModuleEntry(Entry):
         if not self.cache:
             return self._call_fn()
 
-        uid = None
+        uid = ""
 
         if self.args is not None:
             uid = self.args.uid

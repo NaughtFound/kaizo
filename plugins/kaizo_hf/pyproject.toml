@@ -1,12 +1,12 @@
 [project]
 name = "kaizo-hf"
-version = "0.2.1"
+version = "0.2.2"
 description = "Hugging Face plugin for kaizo"
 authors = [{ name = "Mohammad Ghazanfari", email = "mgh.5225@gmail.com" }]
 readme = "README.md"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
-dependencies = ["huggingface-hub>=1.2.2", "kaizo>=1.6.1"]
+dependencies = ["huggingface-hub>=1.2.2", "kaizo>=1.6.3"]
 
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -21,6 +21,10 @@ Changelog = "https://github.com/NaughtFound/kaizo/tree/main/plugins/kaizo_hf/CHA
 
 [dependency-groups]
 test = ["pytest>=9.0.1"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+include = ["kaizo"]
 
 [build-system]
 requires = ["setuptools >= 80.9.0"]

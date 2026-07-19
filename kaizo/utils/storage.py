@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Self
 
 from .entry import DictEntry, Entry
 
@@ -10,7 +9,7 @@ class Storage:
     items: DictEntry[str]
 
     @staticmethod
-    def init() -> Self:
+    def init() -> "Storage":
         return Storage(
             value=None,
             items=DictEntry(resolve=False),

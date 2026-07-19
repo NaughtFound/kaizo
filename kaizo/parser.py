@@ -8,6 +8,7 @@ from .plugins import Plugin, PluginMetadata
 from .utils import (
     DictEntry,
     Entry,
+    ExceptionPolicy,
     FieldEntry,
     FnWithKwargs,
     ListEntry,
@@ -19,7 +20,7 @@ from .utils import (
 
 
 class ConfigParser:
-    config: dict[str]
+    config: dict[str, Any]
     local: ModuleType | None
     storage: dict[str, Storage]
     kwargs: DictEntry[str]
@@ -31,7 +32,7 @@ class ConfigParser:
     def __init__(
         self,
         config_path: str | Path,
-        kwargs: dict[str] | None = None,
+        kwargs: dict[str, Any] | None = None,
         *,
         isolated: bool = True,
     ) -> None:
@@ -97,7 +98,7 @@ class ConfigParser:
         self,
         root: Path,
         modules: dict[str, str],
-        kwargs: dict[str] | None = None,
+        kwargs: dict[str, Any] | None = None,
         *,
         isolated: bool = True,
     ) -> dict[str, Self]:
@@ -118,7 +119,7 @@ class ConfigParser:
 
     def _import_plugins(
         self,
-        plugins: dict[str],
+        plugins: dict[str, Any],
     ) -> dict[str, FnWithKwargs[Plugin]]:
         metadata = PluginMetadata()
         plugin_dict = {}
@@ -179,7 +180,7 @@ class ConfigParser:
 
         return ModuleLoader.load_object(module_path, symbol_name)
 
-    def _resolve_parser(self, key: str) -> Self:
+    def _resolve_parser(self, key: str) -> "ConfigParser":
         if self.local_modules is None:
             msg = "import module is not given"
             raise ValueError(msg)
@@ -250,7 +251,7 @@ class ConfigParser:
 
         return parsed_entry
 
-    def _resolve_list(self, key: str, entry: list) -> FieldEntry[list]:
+    def _resolve_list(self, key: str, entry: list) -> FieldEntry[ListEntry]:
         return FieldEntry(
             key=key,
             value=ListEntry([self._resolve_entry(key, e) for e in entry]),
@@ -292,7 +293,7 @@ class ConfigParser:
 
         return resolved
 
-    def _resolve_dict(self, key: str, entry: dict[str]) -> Entry:
+    def _resolve_dict(self, key: str, entry: dict[str, Any]) -> Entry:
         module_path = entry.get("module")
         symbol_name = entry.get("source")
 
@@ -319,7 +320,7 @@ class ConfigParser:
             lazy=lazy,
             args=resolved_args,
             cache=cache,
-            policy=policy,
+            policy=ExceptionPolicy(policy) if policy else ExceptionPolicy.RAISE,
         )
 
     def _resolve_entry(self, key: str, entry: Any) -> Entry:

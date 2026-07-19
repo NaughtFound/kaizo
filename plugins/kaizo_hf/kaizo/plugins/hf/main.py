@@ -1,7 +1,7 @@
 from asyncio import Future
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from huggingface_hub import CommitInfo, HfApi
 
@@ -31,7 +31,7 @@ class HFPlugin(Plugin):
         repo_path: str,
         *,
         run_as_future: bool = True,
-        commit: HFCommit | Mapping[str] | None = None,
+        commit: HFCommit | Mapping[str, Any] | None = None,
     ) -> Future[CommitInfo] | CommitInfo:
         if commit is None:
             commit = HFCommit()
@@ -56,7 +56,7 @@ class HFPlugin(Plugin):
         repo_path: str,
         *,
         run_as_future: bool = True,
-        commit: HFCommit | Mapping[str] | None = None,
+        commit: HFCommit | Mapping[str, Any] | None = None,
     ) -> Future[CommitInfo] | CommitInfo:
         if commit is None:
             commit = HFCommit()
@@ -78,7 +78,7 @@ class HFPlugin(Plugin):
     def download_file(
         self,
         file_name: str,
-        file_dir: HFDir | Mapping[str] | None = None,
+        file_dir: HFDir | Mapping[str, Any] | None = None,
         *,
         force_download: bool = False,
         local_files_only: bool = False,
@@ -105,8 +105,8 @@ class HFPlugin(Plugin):
 
     def snapshot_download(
         self,
-        folder_dir: HFDir | Mapping[str] | None = None,
-        patterns: HFPatterns | Mapping[str] | None = None,
+        folder_dir: HFDir | Mapping[str, Any] | None = None,
+        patterns: HFPatterns | Mapping[str, Any] | None = None,
         max_workers: int = 8,
         *,
         force_download: bool = False,
