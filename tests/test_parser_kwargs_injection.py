@@ -32,6 +32,13 @@ explicit:
     y: 2
 """
 
+complex_config = f"""
+x: {X}
+y: .{{injected}}
+z:
+  a: .{{y}}
+"""
+
 
 def test_simple_injection(tmp_path: Path) -> None:
     cfg_file = tmp_path / "cfg.yml"
@@ -53,3 +60,14 @@ def test_kwargs_injection(tmp_path: Path) -> None:
     out = parser.parse()
     assert out["implicit"] == X**2
     assert out["explicit"] == X**2
+
+
+def test_complex_injection(tmp_path: Path) -> None:
+    cfg_file = tmp_path / "cfg.yml"
+    cfg_file.write_text(complex_config)
+
+    parser = ConfigParser(cfg_file, kwargs={"injected": ".{x}"})
+    out = parser.parse()
+
+    assert out["y"] == X
+    assert out["z"]["a"] == X

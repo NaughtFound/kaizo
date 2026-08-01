@@ -41,7 +41,7 @@ class ConfigParser:
         root = config_path.parent
 
         self.storage = {}
-        self.kwargs = DictEntry.from_raw(raw_data=kwargs, resolve=False)
+        self.kwargs = DictEntry.from_raw(raw_data=kwargs)
 
         with config_path.open() as file:
             self.config = yaml.safe_load(file)
@@ -228,7 +228,7 @@ class ConfigParser:
 
         if not entry_module:
             if entry_sub_key in self.kwargs:
-                return self.kwargs[entry_sub_key]
+                return self._resolve_entry(key, self.kwargs[entry_sub_key])
 
             parsed_entry = self._resolve_from_storage(
                 key=key,
@@ -325,7 +325,7 @@ class ConfigParser:
 
     def _resolve_entry(self, key: str, entry: Any) -> Entry:
         if key in self.kwargs:
-            return self.kwargs[key]
+            entry = self.kwargs[key]
 
         if isinstance(entry, str):
             return self._resolve_string(key, entry)

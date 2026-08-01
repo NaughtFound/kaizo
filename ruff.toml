@@ -64,6 +64,7 @@ ignore = [
     "S101",
     "LOG015",
     "TRY301",
+    "CPY001",
 ]
 
 fixable = ["ALL"]
