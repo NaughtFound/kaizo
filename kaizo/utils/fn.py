@@ -25,7 +25,10 @@ class FnWithKwargs[R]:
         self.kwargs = kwargs
 
     def __call__(self, *args, **kwargs) -> R:
-        fn = partial(self.fn, *self.args, **self.kwargs)
+        resolved_args = tuple(self.args)
+        resolved_kwargs = dict(self.kwargs)
+
+        fn = partial(self.fn, *resolved_args, **resolved_kwargs)
 
         return fn(*args, **kwargs)
 
