@@ -7,8 +7,13 @@
     "url": "https://github.com/NaughtFound/kaizo.git",
     "directory": "extensions/vscode"
   },
+  "bugs": {
+    "url": "https://github.com/NaughtFound/kaizo/issues"
+  },
+  "homepage": "https://github.com/NaughtFound/kaizo/tree/main/extensions/vscode#readme",
   "version": "0.2.1",
   "publisher": "kaizo-tools",
+  "icon": "images/icon.png",
   "license": "Apache-2.0",
   "engines": {
     "vscode": "^1.85.0"
