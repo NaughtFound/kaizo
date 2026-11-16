@@ -1,0 +1,35 @@
+{
+  "name": "Kaizo",
+  "scopeName": "source.kaizo",
+  "fileTypes": ["kiz"],
+  "patterns": [{ "include": "source.yaml" }],
+  "injections": {
+    "L:source.kaizo - comment": {
+      "patterns": [
+        { "include": "#reference" },
+        { "include": "#property-key" },
+        { "include": "#special-module" }
+      ]
+    }
+  },
+  "repository": {
+    "reference": {
+      "name": "meta.reference.kaizo",
+      "match": "((?:[\\w-]*\\.){1,2})(\\{)([^{}\\n]*)(\\})",
+      "captures": {
+        "1": { "name": "entity.name.namespace.kaizo" },
+        "2": { "name": "punctuation.definition.reference.begin.kaizo" },
+        "3": { "name": "variable.other.reference.kaizo" },
+        "4": { "name": "punctuation.definition.reference.end.kaizo" }
+      }
+    },
+    "property-key": {
+      "match": "^\\s*(?:-\\s+)*(module|source|args|call|lazy|cache|policy|import|local|plugins|isolated)(?=\\s*:)",
+      "captures": { "1": { "name": "keyword.other.kaizo" } }
+    },
+    "special-module": {
+      "match": "^\\s*(?:-\\s+)*module\\s*:\\s+(local|plugin)\\b",
+      "captures": { "1": { "name": "support.constant.kaizo" } }
+    }
+  }
+}

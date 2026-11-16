@@ -1,0 +1,52 @@
+{
+  "Entry": {
+    "prefix": ["entry", "kz-entry"],
+    "body": ["${1:name}:", "  module: ${2:builtins}", "  source: ${3:print}", "  args:", "    - $0"],
+    "description": "Executable Kaizo entry"
+  },
+  "Entry with keyword args": {
+    "prefix": "kz-kwargs",
+    "body": ["${1:name}:", "  module: ${2:module}", "  source: ${3:source}", "  args:", "    ${4:key}: ${5:value}"],
+    "description": "Entry with keyword arguments"
+  },
+  "Lazy entry": {
+    "prefix": "kz-lazy",
+    "body": ["${1:name}:", "  module: ${2:time}", "  source: ${3:sleep}", "  lazy: true", "  args:", "    - $0"],
+    "description": "Lazily executed entry"
+  },
+  "Uncached entry": {
+    "prefix": "kz-nocache",
+    "body": ["${1:name}:", "  module: ${2:random}", "  source: ${3:random}", "  cache: false"],
+    "description": "Entry executed on every access"
+  },
+  "Method call": {
+    "prefix": "kz-method",
+    "body": ["${1:name}:", "  module: ${2:my.module}", "  source: ${3:MyClass}", "  call: ${4:run}", "  args:", "    ${5:key}: ${6:value}"],
+    "description": "Instantiate a class and call a method"
+  },
+  "Plugin registration": {
+    "prefix": "kz-plugin",
+    "body": ["plugins:", "  ${1:my_plugin}:", "    source: ${2:MyPlugin}", "    args:", "      ${3:key}: ${4:value}"],
+    "description": "Register a plugin"
+  },
+  "Plugin call": {
+    "prefix": "kz-plugin-call",
+    "body": ["${1:name}:", "  module: plugin", "  source: ${2:my_plugin}"],
+    "description": "Dispatch a plugin"
+  },
+  "Import": {
+    "prefix": "kz-import",
+    "body": ["import:", "  ${1:shared}: ${2:./shared.kiz}"],
+    "description": "Import another config"
+  },
+  "Local module": {
+    "prefix": "kz-local",
+    "body": ["local: ${1:./helpers.py}"],
+    "description": "Local python file"
+  },
+  "Reference": {
+    "prefix": "kz-ref",
+    "body": [".{${1:name}}"],
+    "description": "Reference another entry"
+  }
+}

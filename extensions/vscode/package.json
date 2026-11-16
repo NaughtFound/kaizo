@@ -1,0 +1,127 @@
+{
+  "name": "kaizo-vscode",
+  "displayName": "Kaizo",
+  "description": "Kaizo (.kiz) language support: Python-aware linting, completion, go to definition, hover, references and rename.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NaughtFound/kaizo.git",
+    "directory": "extensions/vscode"
+  },
+  "version": "0.2.1",
+  "publisher": "kaizo-tools",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Snippets"
+  ],
+  "keywords": [
+    "kaizo",
+    "yaml",
+    "config",
+    "kiz"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:yaml"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "kaizo",
+        "aliases": [
+          "Kaizo",
+          "kaizo"
+        ],
+        "extensions": [
+          ".kiz"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kaizo",
+        "scopeName": "source.kaizo",
+        "path": "./syntaxes/kaizo.tmLanguage.json",
+        "embeddedLanguages": {
+          "source.yaml": "yaml"
+        }
+      }
+    ],
+    "snippets": [
+      {
+        "language": "kaizo",
+        "path": "./snippets/kaizo.json"
+      }
+    ],
+    "configuration": {
+      "title": "Kaizo",
+      "properties": {
+        "kaizo.lint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Kaizo diagnostics."
+        },
+        "kaizo.lint.checkArguments": {
+          "type": "boolean",
+          "default": true,
+          "description": "Check `args` against the Python signature of the resolved module/source (unknown, missing and too many arguments)."
+        },
+        "kaizo.python.path": {
+          "type": "string",
+          "default": "",
+          "description": "Python interpreter used to resolve `module:` imports. Empty = the Python extension's environment, then a workspace .venv, then python3. Supports ${workspaceFolder}."
+        },
+        "kaizo.python.extraPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional folders to search for importable modules (like PYTHONPATH). Supports ${workspaceFolder}."
+        },
+        "kaizo.python.includeWorkspaceFolders": {
+          "type": "boolean",
+          "default": true,
+          "description": "Treat workspace folders as import roots (kaizo is usually run from the project root)."
+        },
+        "kaizo.python.allowImport": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow importing compiled third-party modules (.so/.pyd) to read their members. Importing executes module code; source (.py) modules are never imported."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "kaizo.selectInterpreter",
+        "title": "Kaizo: Select Python Interpreter"
+      },
+      {
+        "command": "kaizo.restartAnalysis",
+        "title": "Kaizo: Re-analyze (clear Python cache)"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=out/extension.js --minify",
+    "typecheck": "tsc --noEmit",
+    "test": "esbuild test/run.ts --bundle --platform=node --format=cjs --outfile=out/test.js && node out/test.js",
+    "package": "npm run build && vsce package --no-dependencies",
+    "test:smoke": "esbuild test/smoke.ts --bundle --platform=node --format=cjs --alias:vscode=./test/vscode-mock.ts --outfile=out/smoke.js && node out/smoke.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^4.1.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "yaml": "^2.9.1"
+  }
+}

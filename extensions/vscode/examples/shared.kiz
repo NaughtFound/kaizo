@@ -1,0 +1,5 @@
+config:
+  module: builtins
+  source: dict
+  args:
+    param: 42
