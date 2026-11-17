@@ -6,7 +6,7 @@ Request:  {"extra": [paths], "allowImport": bool,
            "modules": [names], "symbols": [{"module": m, "name": n}], "lists": [prefixes]}
 A module name of the form "@file:/abs/path.py" refers to a file directly (kaizo `local:`).
 
-Source (.py) modules are analysed with `ast` only. Builtin / stdlib C modules are imported
+Source (.py) modules are analyzed with `ast` only. Builtin / stdlib C modules are imported
 (safe). Third-party compiled modules are imported only when `allowImport` is true.
 
 The script must keep working on the interpreter the user picked, so it only relies on the
@@ -64,6 +64,41 @@ def _search(dirs: list[Path], seg: str) -> Found | None:
     return ("namespace", None, namespace) if namespace else None
 
 
+def _finder_spec_found(spec: importlib.machinery.ModuleSpec) -> Found | None:
+    locations = [d for d in (spec.submodule_search_locations or []) if Path(d).is_dir()]
+    origin = spec.origin if spec.origin and Path(spec.origin).is_file() else None
+    if origin is None:
+        return ("namespace", None, locations) if locations else None
+    if locations:
+        return ("package", origin, locations)
+    return ("module" if origin.endswith(".py") else "compiled", origin, [])
+
+
+def _finder_search(seg: str) -> Found | None:
+    """Ask the import finders (editable installs, .pth hooks) where a top-level name lives.
+
+    `find_spec` on a finder only locates the module; it never imports or executes it.
+    A real file wins over a namespace guess, like for editable installs that also expose
+    a partial namespace package of the same name.
+    """
+    namespace: Found | None = None
+    for finder in sys.meta_path:
+        find = getattr(finder, "find_spec", None)
+        if find is None:
+            continue
+        try:
+            spec = find(seg, None)
+        except Exception:  # noqa: BLE001, S112 - third-party finders may fail in any way
+            continue
+        found = _finder_spec_found(spec) if spec is not None else None
+        if found is None:
+            continue
+        if found[0] != "namespace":
+            return found
+        namespace = namespace or found
+    return namespace
+
+
 def _search_dirs(extra: list[str]) -> list[Path]:
     return [Path(d) for d in [*extra, *sys.path] if d and Path(d).is_dir()]
 
@@ -82,6 +117,8 @@ def find_module(name: str, extra: list[str]) -> Found | None:
     found: Found | None = None
     for i, seg in enumerate(segs):
         found = _search(dirs, seg)
+        if i == 0 and (found is None or found[0] == "namespace"):
+            found = _finder_search(seg) or found
         if found is None or (i < len(segs) - 1 and found[0] not in PACKAGE_KINDS):
             return None
         dirs = [Path(d) for d in found[2]]
@@ -964,9 +1001,25 @@ def _scan(dirs: list[Path], *, top: bool) -> dict[str, bool]:
     return out
 
 
+def _editable_tops() -> dict[str, bool]:
+    """Top-level names exposed by editable-install finders (they use a MAPPING dict)."""
+    out: dict[str, bool] = {}
+    for finder in sys.meta_path:
+        mapping = getattr(
+            sys.modules.get(getattr(finder, "__module__", "")), "MAPPING", None
+        )
+        if isinstance(mapping, dict):
+            for name in mapping:
+                top = str(name).split(".", 1)[0]
+                if top.isidentifier() and not top.startswith("_"):
+                    out.setdefault(top, True)
+    return out
+
+
 def list_modules(prefix: str, extra: list[str]) -> list[Json]:
     if prefix == "":
         found = {n: False for n in STDLIB if not n.startswith("_")}
+        found.update(_editable_tops())
         found.update(_scan(_search_dirs(extra), top=True))
         return [{"name": k, "pkg": bool(v)} for k, v in sorted(found.items())]
     r = find_module(prefix, extra)

@@ -6,7 +6,10 @@ import { lintText } from '../src/lint';
 import { buildModel } from '../src/index';
 import { PythonService } from '../src/python';
 
-const PY = process.env.KAIZO_TEST_PYTHON || '/tmp/kzenv/bin/python';
+// Interpreter used by the tests. It must have `kaizo` installed (site-packages checks).
+// Order: $KAIZO_TEST_PYTHON, the repository venv (../../.venv), then python3 / python on PATH.
+const repoVenv = ['bin/python', 'Scripts/python.exe'].map((p) => path.resolve(__dirname, '..', '..', '..', '.venv', p)).find((p) => fs.existsSync(p));
+const PY = process.env.KAIZO_TEST_PYTHON || repoVenv || (process.platform === 'win32' ? 'python' : 'python3');
 let failed = 0;
 const ok = (cond: boolean, name: string, extra?: unknown) => {
   if (!cond) { failed++; console.log('FAIL', name, extra === undefined ? '' : JSON.stringify(extra, null, 0)?.slice(0, 600)); } else console.log('ok  ', name);
@@ -32,6 +35,10 @@ const at = (text: string, needle: string, delta = 0) => { const i = text.indexOf
 async function main() {
   const probe = await py.probe();
   ok(!!probe, 'python helper runs', probe);
+  if (!probe) {
+    console.log(`\nCannot run the Python helper with "${PY}".\nSet KAIZO_TEST_PYTHON to an interpreter that has kaizo installed, e.g.\n  KAIZO_TEST_PYTHON=../../.venv/bin/python npm test`);
+    process.exit(1);
+  }
   console.log('     using', probe?.executable, probe?.version);
 
   // ------------------------------------------------------------------ lint: demo is clean

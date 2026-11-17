@@ -12,7 +12,7 @@
   },
   "homepage": "https://github.com/NaughtFound/kaizo/tree/main/extensions/vscode#readme",
   "version": "0.2.1",
-  "publisher": "kaizo-tools",
+  "publisher": "NaughtFound",
   "icon": "images/icon.png",
   "license": "Apache-2.0",
   "engines": {
