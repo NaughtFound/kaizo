@@ -15,7 +15,7 @@ class DDPMConfig(DDPMParams):
     ema_decay: float = 0.99
     ema_start: int = 15
     ema_update_freq: int = 1
-    t0: float = 0.5          # overrides the base default
+    t0: float = 0.5  # overrides the base default
 
 
 @dataclass
@@ -38,5 +38,5 @@ class B:
     def who(self, y): ...
 
 
-class C(A, B):
+class C(A, B):  # ty: ignore[lost-keyword-for-regular-parameter]
     pass

@@ -1,6 +1,6 @@
 from pathlib import Path
 from types import ModuleType
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar
 
 import yaml
 
@@ -24,8 +24,8 @@ class ConfigParser:
     local: ModuleType | None
     storage: dict[str, Storage]
     kwargs: DictEntry[str]
-    local_modules: dict[str, Self] | None
-    shared_modules: ClassVar[dict[str, Self]] = {}
+    local_modules: dict[str, "ConfigParser"] | None
+    shared_modules: ClassVar[dict[str, "ConfigParser"]] = {}
     plugins: dict[str, FnWithKwargs[Plugin]] | None
     isolated: bool
 
@@ -101,7 +101,7 @@ class ConfigParser:
         kwargs: dict[str, Any] | None = None,
         *,
         isolated: bool = True,
-    ) -> dict[str, Self]:
+    ) -> dict[str, "ConfigParser"]:
         module_dict = {}
 
         for module_name, module_path_str in modules.items():
