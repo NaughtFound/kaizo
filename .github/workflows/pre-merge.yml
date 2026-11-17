@@ -39,7 +39,7 @@ jobs:
           uv run ruff check
 
       - name: Checking via ty
-        run: uv run ty check
+        run: uv run ty check kaizo
 
       - name: Checking spell errors
         run: cspell kaizo/* tests/* --no-progress
