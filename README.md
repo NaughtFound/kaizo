@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.jpeg" alt="Kaizo logo" width="200">
+</p>
+
 # Kaizo
 
 Kaizo is a **declarative YAML-based configuration parser** for Python.
