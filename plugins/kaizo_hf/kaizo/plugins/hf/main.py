@@ -1,5 +1,5 @@
-from asyncio import Future
 from collections.abc import Mapping
+from concurrent.futures import Future
 from pathlib import Path
 from typing import Any, Literal
 

@@ -1,0 +1,59 @@
+local: ./missing.py
+import:
+  shared: ./nope.kiz
+
+a:
+  module: builtins
+  source: print
+  lazzy: true
+  cache: maybe
+  policy: ignor
+  args: hello
+
+b:
+  module: builtins
+  sorce: print
+
+c:
+  module: plugin
+  source: logger
+
+d:
+  module: math
+  source: sqrt
+  args:
+    - .{undefined_thing}
+    - nope.{x}
+    - .{d}
+    - .{later}
+
+later:
+  module: builtins
+  source: len
+  args:
+    - abc
+
+e:
+  module: nosuchpackage
+  source: f
+
+f:
+  module: math
+  source: sqroot
+
+g:
+  module: math
+  source: sqrt
+  args:
+    y: 1
+
+h:
+  module: builtins
+  source: print
+  args:
+
+i:
+  module: os.path
+  source: join
+  args:
+    - "hello .{later} world"

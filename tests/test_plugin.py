@@ -75,9 +75,10 @@ def test_plugin_with_args(tmp_path: Path) -> None:
     cfg_file.write_text(plugin_with_args_config)
 
     parser = kaizo.ConfigParser(cfg_file)
+    assert parser.plugins is not None
     obj = parser.plugins["dummy"]
 
-    assert isinstance(obj, kaizo.utils.FnWithKwargs)
+    assert isinstance(obj, kaizo.utils.FnWithKwargs)  # ty: ignore[possibly-missing-submodule]
 
     plugin = obj()
     assert plugin.x == X

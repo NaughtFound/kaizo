@@ -1,0 +1,10 @@
+src/**
+test/**
+examples/**
+node_modules/**
+tsconfig.json
+out/test.js
+out/smoke.js
+.vscode/**
+**/*.map
+*.vsix

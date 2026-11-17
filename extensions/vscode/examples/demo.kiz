@@ -1,0 +1,53 @@
+# Try the extension here: completion, hover, go to definition, diagnostics.
+import:
+  shared: ./shared.kiz
+
+local: ./helpers.py
+
+plugins:
+  core:
+    source: Plugin
+
+name: World
+
+shared_args:
+  - Hello
+  - .{name}
+
+greet:
+  module: builtins
+  source: print
+  args: .{shared_args}
+
+delayed:
+  module: time
+  source: sleep
+  lazy: true
+  args:
+    - 2
+
+compute:
+  module: local
+  source: add
+  args:
+    - 1
+    - 2
+
+total:
+  module: local
+  source: add
+  args:
+    a: 1
+    b: .{compute}
+
+from_import:
+  module: builtins
+  source: print
+  args:
+    - shared.{config}
+    - shared.config.{param}
+
+plugin_instance:
+  module: plugin
+  source: core
+  call: false

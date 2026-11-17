@@ -1,0 +1,8 @@
+# Extension-local ruff config. Inherits the repository settings; adjust the path if needed.
+extend = "../../pyproject.toml"
+
+[lint.extend-per-file-ignores]
+# resolver.py is a standalone script run with `python -I`, not part of a package
+"python/*.py" = ["INP001"]
+# fixtures: their content and line positions are asserted by the tests
+"examples/*.py" = ["ALL"]

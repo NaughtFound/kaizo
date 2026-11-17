@@ -27,13 +27,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip ruff
+          python -m pip install --upgrade pip ruff ty
           npm install -g cspell
 
       - name: Checking format and lint
         run: |
           ruff format --check
           ruff check
+
+      - name: Checking via ty
+        run: ty check
 
       - name: Checking spell errors
         run: cspell docs/* --no-progress
