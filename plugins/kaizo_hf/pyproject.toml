@@ -20,7 +20,7 @@ Issues = "https://github.com/NaughtFound/kaizo/issues"
 Changelog = "https://github.com/NaughtFound/kaizo/tree/main/plugins/kaizo_hf/CHANGELOG.md"
 
 [dependency-groups]
-test = ["pytest>=9.0.1"]
+dev = ["ty>=0.0.104", "pytest>=9.0.1", "ruff>=0.17.5"]
 
 [build-system]
 requires = ["setuptools >= 80.9.0"]

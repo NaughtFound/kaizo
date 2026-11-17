@@ -24,8 +24,8 @@ Documentation = "https://NaughtFound.github.io/kaizo"
 hf = ["kaizo-hf"]
 
 [dependency-groups]
-test = ["pytest>=9.0.1"]
 docs = ["Sphinx<=8.3.0", "sphinx-rtd-theme>=3.0.2"]
+dev = ["ty>=0.0.104", "pytest>=9.0.1", "ruff>=0.17.5"]
 
 [build-system]
 requires = ["setuptools >= 80.9.0"]
